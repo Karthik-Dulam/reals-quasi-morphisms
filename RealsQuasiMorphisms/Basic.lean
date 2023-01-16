@@ -1,7 +1,10 @@
-import Mathlib.Init.Data.Int.Basic
-import Mathlib.Algebra.Group.Defs
+import Mathlib.Data.Int.AbsoluteValue
+import Mathlib.Tactic.Linarith
 
-def is_bounded {G : Type u} (f : G → ℤ) := ∃n, ∀ x, f x ≤ n
-structure quasiHomomorphism (G : Type u) [AddCommGroup G] where 
-  f : G → ℤ
-  almostAdditive : is_bounded (fun (x,y) => f (x+y) - f x - f y)
+variable {G : Type u} [AddCommGroup G]
+
+variable (G) in structure quasiHomomorphism where 
+  func : G → ℤ
+  bound : ℕ 
+  almostAdditive x y : (func (x+y) - func x - func y).natAbs ≤ bound
+
