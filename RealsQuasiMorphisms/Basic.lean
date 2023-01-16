@@ -48,3 +48,21 @@ private lemma almost_linear (f : QuasiMorphism G) (g : G) (m : ℤ)
             := Nat.add_le_add (f.almostAdditive ..) hᵢ
       _ = (m.succ + 1) * f.bound
             := by linarith
+
+/-- May generalize to qh(G,ℤ) later
+Reference: second inequality proven in
+http://web.science.mq.edu.au/~street/EffR.pdf.
+Eq (1) --/
+private lemma almost_cross_linear (f : QuasiMorphism ℤ) (m n:ℤ)
+    : |n * f m - m * f n| ≤ (|m| + |n| + 2) * f.bound := by
+  have h₁ : n * f m - m * f n = (n * f m - f (n*m)) + (f (n*m) - m * f n) := by linarith
+  have h₂ : |n * f m - m * f n| ≤ |n * f m - f (n*m)|+ |f (n*m) - m * f n|:= by
+    rw [h₁]
+    exact Int.natAbs_add_le ..
+  have h₃ : |n * f m - f (n*m)| ≤ (|n| + 1) * f.bound := by
+    rw [← Int.natAbs_neg]; simp
+    exact almost_linear ..
+  have h₄ : |f (n*m) - m * f n| ≤ (|m| + 1) * f.bound := by
+    rw [Int.mul_comm]
+    exact almost_linear ..
+  linarith
