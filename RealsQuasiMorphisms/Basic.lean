@@ -1,5 +1,6 @@
 import Mathlib.Data.Int.AbsoluteValue
 import Mathlib.Tactic.Linarith
+import Mathlib.Tactic.LibrarySearch
 
 -- Note: we can avoid the AbsoluteValue import by using simp? to get
 -- exact `simp only`s for every use. However, this results in huge lists
@@ -66,3 +67,23 @@ private lemma almost_cross_linear (f : QuasiMorphism ℤ) (m n:ℤ)
     rw [Int.mul_comm]
     exact almost_linear ..
   linarith
+
+
+def comp  (f : QuasiMorphism ℤ) (g : QuasiMorphism ℤ) : QuasiMorphism ℤ := 
+  ⟨f ∘ g, sorry, fun x y => by 
+    have hg : g (x+y) ≤ g x + g y + g.bound := by linarith [Int.le_natAbs, g.almostAdditive ..]
+    have hf (k : ℤ): f (g x + g y + k) 
+        ≤ f (g x) + f (g y) + f (k) + 2*f.bound := by
+      linarith 
+        [@Int.le_natAbs (f (g x + g y + k) - f (g x + g y) - f (k)),
+        f.almostAdditive ..,
+        @Int.le_natAbs (f (g x + g y) - f (g x) - f (g y)),
+        f.almostAdditive (g x) (g y),
+        Int.le_natAbs]
+    -- k = argmax{f(g(x) + g(y) + k}} for k in ℤ ∩ [-g.bound, g.bound]
+    have k : ℕ := sorry 
+    have hk : f (g x + g y + g.bound) ≤ f (g x + g y + k) := sorry
+    have : f (g (x + y)) - f (g x) - f (g y) ≤ f (k) + 2*f.bound := by 
+      sorry
+    sorry⟩
+
