@@ -68,9 +68,13 @@ private lemma almost_cross_linear (f : QuasiMorphism ℤ) (m n:ℤ)
     exact almost_linear ..
   linarith
 
+namespace QuasiMorphism
 
-def comp  (f : QuasiMorphism ℤ) (g : QuasiMorphism ℤ) : QuasiMorphism ℤ := 
-  ⟨f ∘ g, sorry, fun x y => by 
+
+def comp  (f : QuasiMorphism ℤ) (g : QuasiMorphism ℤ) : QuasiMorphism ℤ where
+  toFun := f ∘ g
+  bound := sorry
+  almostAdditive x y := by 
     have hg : g (x+y) ≤ g x + g y + g.bound := by linarith [Int.le_natAbs, g.almostAdditive ..]
     have hf (k : ℤ): f (g x + g y + k) 
         ≤ f (g x) + f (g y) + f (k) + 2*f.bound := by
@@ -85,5 +89,25 @@ def comp  (f : QuasiMorphism ℤ) (g : QuasiMorphism ℤ) : QuasiMorphism ℤ :=
     have hk : f (g x + g y + g.bound) ≤ f (g x + g y + k) := sorry
     have : f (g (x + y)) - f (g x) - f (g y) ≤ f (k) + 2*f.bound := by 
       sorry
-    sorry⟩
+    sorry
+
+
+instance : HAdd (QuasiMorphism G) (QuasiMorphism G) (QuasiMorphism G) where
+  hAdd := sorry
+
+def add (f g : QuasiMorphism G): QuasiMorphism G where 
+  toFun := f + g
+  bound := f.bound + g.bound
+  almostAdditive x y := sorry
+
+
+instance : AddCommGroup (QuasiMorphism G) where 
+  add := sorry
+  add_assoc := sorry
+  zero := sorry 
+  zero_add := sorry
+  add_zero := sorry 
+  neg := sorry 
+  add_left_neg := sorry
+  add_comm := sorry
 
