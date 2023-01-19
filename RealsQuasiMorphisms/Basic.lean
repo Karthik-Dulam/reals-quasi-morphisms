@@ -102,9 +102,9 @@ def add (f g : QuasiMorphism G): QuasiMorphism G where
 
 
 instance : AddCommGroup (QuasiMorphism G) where 
-  add := sorry
+  add := QuasiMorphism.add
   add_assoc := sorry
-  zero := sorry 
+  zero := sorry
   zero_add := sorry
   add_zero := sorry 
   neg := sorry 
