@@ -17,6 +17,11 @@ local notation (priority := high) "|" x "|" => Int.natAbs x
 
 variable {G : Type u} [AddCommGroup G]
 
+/- Remark: we have included `bound` as a field rather than
+encapsulating the "almost additive" property into an `∃ bound, ...`.
+This has the effect that the same function with different choices of
+bound is a different `QuasiMorphism`, i.e., that `QuasiMorphism` is a
+function with additional data, rather than just properties. -/
 variable (G) in
 structure QuasiMorphism where
   toFun : G → ℤ
@@ -120,6 +125,43 @@ private lemma almost_smul_comm' (f : QuasiMorphism ℤ) (m n : ℤ)
 
 end AlmostProperties
 
+section AlgebraicStructure
+
+/-- Addition of quasi-morphisms. -/
+def add (f g : QuasiMorphism G) : QuasiMorphism G where
+  toFun := f + g
+  bound := f.bound + g.bound
+  almostAdditive x y :=
+    calc |f (x + y) + g (x + y) - (f x + g x) - (f y + g y)|
+        = |(f (x + y) - f x - f y) + (g (x + y) - g x - g y)|
+            := congrArg (|·|) <| by linarith
+      _ ≤ |f (x + y) - f x - f y| + |g (x + y) - g x - g y|
+            := Int.natAbs_add_le ..
+      _ ≤ f.bound + g.bound
+            := by apply Nat.add_le_add <;> apply almostAdditive
+
+/-- Negation of quasi-morphisms. -/
+def neg (f : QuasiMorphism G) : QuasiMorphism G where
+  toFun := fun x => -(f x)
+  bound := f.bound
+  almostAdditive x y := by
+    calc | -f (x + y) - (-f x) - (-f y)|
+        = | -(-f (x + y) - (-f x) - (-f y))| := by rw [Int.natAbs_neg]
+      _ = |f (x + y) - f x - f y|            := congrArg (|·|) <| by linarith
+      _ ≤ f.bound                            := f.almostAdditive ..
+
+-- We can't prove equality of quasi-morphisms yet. We need to prove an
+-- ext lemma.
+instance : AddCommGroup (QuasiMorphism G) where
+  add := QuasiMorphism.add
+  add_comm f g := sorry
+  add_assoc f g h := sorry
+  zero := ⟨0, 0, fun _ _ => Nat.le_refl ..⟩
+  zero_add f := sorry
+  add_zero f := sorry
+  neg := QuasiMorphism.neg
+  add_left_neg f := sorry
+
 /-- Composition of quasi-morphisms on ℤ, returning another quasi-morphism. -/
 def comp  (f : QuasiMorphism ℤ) (g : QuasiMorphism ℤ) : QuasiMorphism ℤ where
   toFun := f ∘ g
@@ -141,25 +183,6 @@ def comp  (f : QuasiMorphism ℤ) (g : QuasiMorphism ℤ) : QuasiMorphism ℤ wh
       sorry
     sorry
 
-
-instance : HAdd (QuasiMorphism G) (QuasiMorphism G) (QuasiMorphism G) where
-  hAdd := sorry
-
-/-- Addition of quasi-morphisms. -/
-def add (f g : QuasiMorphism G): QuasiMorphism G where 
-  toFun := f + g
-  bound := f.bound + g.bound
-  almostAdditive x y := sorry
-
-
-instance : AddCommGroup (QuasiMorphism G) where 
-  add := QuasiMorphism.add
-  add_assoc := sorry
-  zero := sorry
-  zero_add := sorry
-  add_zero := sorry 
-  neg := sorry 
-  add_left_neg := sorry
-  add_comm := sorry
+end AlgebraicStructure
 
 end QuasiMorphism
