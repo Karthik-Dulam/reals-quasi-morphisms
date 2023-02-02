@@ -20,56 +20,97 @@ structure QuasiMorphism where
 instance : CoeFun (QuasiMorphism G) fun _ => G → ℤ where
   coe := QuasiMorphism.toFun
 
+namespace QuasiMorphism
+
+section AlmostProperties
+variable (f : QuasiMorphism G) (g : G) (m : ℤ)
+
+lemma almost_zero : |f 0| ≤ f.bound := by simpa using f.almostAdditive 0 0
+/-   calc |f 0| = | -(f 0)|             := by rw [Int.natAbs_neg]
+           _ = |f (0+0) - f 0 - f 0| := congrArg (|·|) <| by abel_nf
+           _ ≤ f.bound               := f.almostAdditive 0 0 -/
+
+lemma almost_neg : |f (-g) - (- (f g))| ≤ f.bound * 2 :=
+  calc |f (-g) - (- (f g))|
+           = |(f (-g) + f g - f 0) + f 0|
+               := congrArg (|·|) <| by linarith
+         _ ≤ |f (-g) + f g - f 0| + |f 0| := Int.natAbs_add_le ..
+         _ = |f (-g + g) - f (-g) - f g| + |f 0|
+               := by apply congrArg (· + |f 0|)
+                     conv => arg 1 -- inside left ||
+                             rewrite [←Int.natAbs_neg, ←add_left_neg g]
+                     apply congrArg (|·|); linarith
+         _ ≤ f.bound * 2
+               := Nat.mul_two .. ▸ Nat.add_le_add (f.almostAdditive (-g) g)
+                                                  f.almost_zero
+
 /-- Reference: first inequality proven in
 http://web.science.mq.edu.au/~street/EffR.pdf. -/
-private lemma almost_linear (f : QuasiMorphism G) (g : G) (m : ℤ)
-    : |f (m • g) - m * f g| ≤ (|m| + 1) * f.bound := by
-  suffices forNats (g : G) (m : ℕ) : |f (m • g) - m * f g| ≤ (m + 1) * f.bound
-  · cases m
-    case ofNat m => simpa /- only [Int.ofNat_eq_coe, coe_nat_zsmul, Int.natAbs_ofNat] -/
-                      using forNats g m
-    case negSucc m => /- simpa using forNats (-g) m.succ -/ sorry
-  -- Thus, proving the lemma reduces to proving `forNats`.
-  induction m
-  case zero => simpa /- only [Nat.zero_eq, (show 0 • g = 0 from AddMonoid.nsmul_zero ..), Nat.cast_zero, zero_mul, sub_zero, zero_add, one_mul, add_zero, sub_self, zero_sub, Int.natAbs_neg] -/
-                     using f.almostAdditive 0 0
-  case succ m hᵢ =>
+private lemma almost_smul : |f (m • g) - m * f g| ≤ f.bound * (|m| + 1) := by
+  cases m <;> (rename_i m; induction m)
+  case ofNat.zero => simp; exact f.almost_zero
+  case ofNat.succ m hᵢ =>
+    rewrite [Int.ofNat_eq_coe, ofNat_zsmul] at hᵢ ⊢
     -- Rewriting these somewhat deep subterms with 'calc' would
     -- involve verbosely repeating the surroundings.
     rewrite [show m.succ • g = g + m • g from AddMonoid.nsmul_succ ..,
-             show m.succ * f g = f g + m * f g
-               -- It would be nice if linarith 'knew' about these lemmas
+             show ↑(m.succ) * f g = f g + m * f g
                by rewrite [Nat.succ_eq_add_one, Nat.cast_succ]; linarith]
     calc |f (g + m • g) - (f g + m * f g)|
         = |(f (g + m • g) - f g - f (m • g)) + (f (m • g) - m * f g)|
-            := by congr; linarith
+            := congrArg (|·|) <| by linarith
       _ ≤ |f (g + m • g) - f g - f (m • g)| + |f (m • g) - m * f g|
             := Int.natAbs_add_le ..
-      _ ≤ f.bound + (m + 1) * f.bound
+      _ ≤ f.bound + f.bound * (m + 1)
             := Nat.add_le_add (f.almostAdditive ..) hᵢ
-      _ = (m.succ + 1) * f.bound
+      _ = f.bound * (m.succ + 1)
             := by linarith
+  case negSucc.zero =>
+    rewrite [show Int.negSucc Nat.zero = -1 by rfl]; simpa using f.almost_neg g
+  case negSucc.succ m hᵢ =>
+    conv => lhs; rewrite [show Int.negSucc m.succ = Int.negSucc m - 1 by rfl]
+    rewrite [sub_zsmul, one_smul, sub_mul, one_mul]
+    calc |f (Int.negSucc m • g + -g) - (Int.negSucc m * f g - f g)|
+        = | -(f (Int.negSucc m • g) - f (Int.negSucc m • g + -g) - f g)
+            + (f (Int.negSucc m • g) - Int.negSucc m * f g)|
+            := congrArg (|·|) <| by linarith
+      _ ≤ |f (Int.negSucc m • g) - f (Int.negSucc m • g + -g) - f g|
+          + |f (Int.negSucc m • g) - Int.negSucc m * f g|
+            := by conv => rhs; arg 1; rewrite [←Int.natAbs_neg]
+                  apply Int.natAbs_add_le
+      _ ≤ f.bound + f.bound * (|Int.negSucc m| + 1)
+            := Nat.add_le_add (by -- change `f (Int.negSucc m)` to `f (Int.negSucc m + -g + g)`
+                                  rewrite [← congrArg f <| neg_add_cancel_right ..]
+                                  apply f.almostAdditive _ g)
+                              hᵢ
+      _ = f.bound * (|Int.negSucc m.succ| + 1)
+            := by simp only [Int.natAbs_negSucc]; linarith
 
-/-- May generalize to qh(G,ℤ) later
-Reference: second inequality proven in
-http://web.science.mq.edu.au/~street/EffR.pdf.
-Eq (1) --/
-private lemma almost_cross_linear (f : QuasiMorphism ℤ) (m n:ℤ)
-    : |n * f m - m * f n| ≤ (|m| + |n| + 2) * f.bound := by
-  have h₁ : n * f m - m * f n = (n * f m - f (n*m)) + (f (n*m) - m * f n) := by linarith
-  have h₂ : |n * f m - m * f n| ≤ |n * f m - f (n*m)|+ |f (n*m) - m * f n|:= by
-    rw [h₁]
-    exact Int.natAbs_add_le ..
-  have h₃ : |n * f m - f (n*m)| ≤ (|n| + 1) * f.bound := by
-    rw [← Int.natAbs_neg]; simp
-    exact almost_linear ..
-  have h₄ : |f (n*m) - m * f n| ≤ (|m| + 1) * f.bound := by
-    rw [Int.mul_comm]
-    exact almost_linear ..
-  linarith
+/-- Reference: second inequality proven in
+http://web.science.mq.edu.au/~street/EffR.pdf. -/
+private lemma almost_smul_comm (m n : ℤ)
+    : |n * f (m • g) - m * f (n • g)| ≤ f.bound * (|m| + |n| + 2) :=
+  calc |n * f (m • g) - m * f (n • g)|
+      = |(n * f (m • g) - f (n • m • g)) + (f (n • m • g) - m * f (n • g))|
+          := congrArg (|·|) <| by linarith
+    _ ≤ |n * f (m • g) - f (n • m • g)| + |f (n • m • g) - m * f (n • g)|
+          := Int.natAbs_add_le ..
+    _ = |f (n • m • g) - n * f (m • g)| + |f (m • n • g) - m * f (n • g)|
+          := by conv => lhs; arg 1; rewrite [←Int.natAbs_neg]
+                rewrite [smul_comm m n g]
+                congr; linarith
+    _ ≤ f.bound * (|n| + 1) + f.bound * (|m| + 1)
+          := Nat.add_le_add (f.almost_smul ..) (f.almost_smul ..)
+    _ = f.bound * (|m| + |n| + 2) := by linarith
 
-namespace QuasiMorphism
+/- `almost_smul_comm'` specialised to quasi-morphisms on integers and applied to 1.
+Eq (1) of http://web.science.mq.edu.au/~street/EffR.pdf. -/
+private lemma almost_smul_comm' (f : QuasiMorphism ℤ) (m n : ℤ)
+    : |n * f m - m * f n| ≤ f.bound * (|m| + |n| + 2) := by
+  conv => lhs; rewrite [←congrArg f (zsmul_int_one m), ←congrArg f (zsmul_int_one n)]
+  exact f.almost_smul_comm 1 m n
 
+end AlmostProperties
 
 def comp  (f : QuasiMorphism ℤ) (g : QuasiMorphism ℤ) : QuasiMorphism ℤ where
   toFun := f ∘ g
@@ -111,3 +152,4 @@ instance : AddCommGroup (QuasiMorphism G) where
   add_left_neg := sorry
   add_comm := sorry
 
+end QuasiMorphism
