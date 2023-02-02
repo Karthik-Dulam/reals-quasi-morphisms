@@ -18,6 +18,9 @@ jobs:
           echo | source $HOME/.profile && $HOME/.elan/bin/elan --version
       - uses: actions/checkout@v2
 
+      - name: get cache
+        run: lake exe cache get
+
       - name: build 
         run: |
           lake build
