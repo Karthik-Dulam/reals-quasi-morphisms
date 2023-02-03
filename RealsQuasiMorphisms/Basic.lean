@@ -53,7 +53,7 @@ instance : CoeFun (QuasiMorphism G) fun _ => G → ℤ where
 
 @[ext]
 theorem QuasiMorphism.ext
-  : (f₁ f₂ : QuasiMorphism G) → f₁.toFun = f₂.toFun → f₁ = f₂
+  : {f₁ f₂ : QuasiMorphism G} → f₁.toFun = f₂.toFun → f₁ = f₂
 | ⟨_f, _⟩, ⟨.(_f), _⟩, rfl => rfl
 
 end TypeDef
