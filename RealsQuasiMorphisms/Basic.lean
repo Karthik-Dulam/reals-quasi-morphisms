@@ -1,9 +1,11 @@
 import Mathlib.Data.Int.AbsoluteValue
 import Mathlib.Tactic.Linarith
+import Mathlib.Data.Int.Range
+import Mathlib.Data.List.MinMax
+import RealsQuasiMorphisms.ArgMax
 import Mathlib.Tactic.LibrarySearch
 
--- Note: we can avoid the AbsoluteValue import by using simp? to get
--- exact `simp only`s for every use. However, this results in huge lists
+-- Note: we can avoid the AbsoluteValue import by using simp? to get exact `simp only`s for every use. However, this results in huge lists
 -- of lemmas sometimes, so this hasn't been done for now.
 
 -- For convenience. We can think about scoping this with sections later.
@@ -53,7 +55,7 @@ private lemma almost_linear (f : QuasiMorphism G) (g : G) (m : ℤ)
 /-- May generalize to qh(G,ℤ) later
 Reference: second inequality proven in
 http://web.science.mq.edu.au/~street/EffR.pdf.
-Eq (1) --/
+Eq (1) -/
 private lemma almost_cross_linear (f : QuasiMorphism ℤ) (m n:ℤ)
     : |n * f m - m * f n| ≤ (|m| + |n| + 2) * f.bound := by
   have h₁ : n * f m - m * f n = (n * f m - f (n*m)) + (f (n*m) - m * f n) := by linarith
@@ -70,13 +72,23 @@ private lemma almost_cross_linear (f : QuasiMorphism ℤ) (m n:ℤ)
 
 namespace QuasiMorphism
 
-
 def comp  (f : QuasiMorphism ℤ) (g : QuasiMorphism ℤ) : QuasiMorphism ℤ where
   toFun := f ∘ g
-  bound := sorry
+  bound := by
+    let list_k : List ℤ := Int.range (-g.bound) (g.bound + 1)
+    have hlist_k : list_k ≠ [] := by simp [Int.range]; linarith
+    let k : ℤ := ArgMax list_k hlist_k (fun i => f (g x + g y + i))
   almostAdditive x y := by 
-    have hg : g (x+y) ≤ g x + g y + g.bound := by linarith [Int.le_natAbs, g.almostAdditive ..]
-    have hf (k : ℤ): f (g x + g y + k) 
+    let list_k : List ℤ := Int.range (-g.bound) (g.bound + 1)
+    have hg : ∃ i ∈ list_k, g (x+y) - g x - g y = i := by
+      /- simp [Int.range]; have hgg := g.almostAdditive x y; -/ 
+      use (g (x+y) - g x - g y); simp; 
+      /- linarith [Int.natAbs, Int.le_natAbs .., List.mem_range ..] -/
+      sorry
+      /- linarith [g.almostAdditive .., Int.natAbs_neg, Int.natAbs_add_le] -/
+    have hlist_k : list_k ≠ [] := by simp [Int.range]; linarith
+    let k : ℤ := ArgMax list_k hlist_k (fun i => f (g x + g y + i))
+    have hf : f (g x + g y + k) 
         ≤ f (g x) + f (g y) + f (k) + 2*f.bound := by
       linarith 
         [@Int.le_natAbs (f (g x + g y + k) - f (g x + g y) - f (k)),
@@ -84,12 +96,14 @@ def comp  (f : QuasiMorphism ℤ) (g : QuasiMorphism ℤ) : QuasiMorphism ℤ wh
         @Int.le_natAbs (f (g x + g y) - f (g x) - f (g y)),
         f.almostAdditive (g x) (g y),
         Int.le_natAbs]
-    -- k = argmax{f(g(x) + g(y) + k}} for k in ℤ ∩ [-g.bound, g.bound]
-    have k : ℕ := sorry 
-    have hk : f (g x + g y + g.bound) ≤ f (g x + g y + k) := sorry
+    have hk : ∀ i ∈ list_k, f (g x + g y + i) ≤ f (g x + g y + k) := by
+      apply le_ArgMax list_k hlist_k (fun i => f (g x + g y + i))
+      /- simp [Int.range]; use 2*g.bound; exact ⟨by simp; linarith, by simp; linarith⟩ -/
     have : f (g (x + y)) - f (g x) - f (g y) ≤ f (k) + 2*f.bound := by 
+
       sorry
-    sorry
+    simp [hf] at hg; linarith [Int.le_natAbs]
+
 
 
 instance : HAdd (QuasiMorphism G) (QuasiMorphism G) (QuasiMorphism G) where
@@ -100,14 +114,18 @@ def add (f g : QuasiMorphism G): QuasiMorphism G where
   bound := f.bound + g.bound
   almostAdditive x y := sorry
 
+def constant (k : ℤ) : QuasiMorphism G where
+  toFun := fun _ => k
+  bound := |k| 
+  almostAdditive _ _ := by simp only [sub_self, zero_sub, Int.natAbs_neg, le_refl]
 
 instance : AddCommGroup (QuasiMorphism G) where 
   add := QuasiMorphism.add
   add_assoc := sorry
-  zero := sorry
+  zero := QuasiMorphism.constant 0
   zero_add := sorry
   add_zero := sorry 
-  neg := sorry 
+  neg := sorry
   add_left_neg := sorry
   add_comm := sorry
 
