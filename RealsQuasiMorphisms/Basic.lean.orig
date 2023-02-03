@@ -1,5 +1,12 @@
 import Mathlib.Algebra.Group.Basic
 import Mathlib.Tactic.Linarith
+<<<<<<< HEAD
+import Mathlib.Data.Int.Range
+import Mathlib.Data.List.MinMax
+import RealsQuasiMorphisms.ArgMax
+import Mathlib.Tactic.LibrarySearch
+=======
+>>>>>>> refs/remotes/origin/master
 
 /-! Defines quasi-morphisms from an abelian group to ℤ and algebraic operations on them.
 
@@ -338,6 +345,40 @@ protected def neg : QuasiMorphism G where
   almostAdditive := local_wrapper neg 0
 
 /-- Composition of quasi-morphisms on ℤ, returning another quasi-morphism. -/
+<<<<<<< HEAD
+def comp  (f : QuasiMorphism ℤ) (g : QuasiMorphism ℤ) : QuasiMorphism ℤ where
+  toFun := f ∘ g
+  bound := by
+    let list_k : List ℤ := Int.range (-g.bound) (g.bound + 1)
+    have hlist_k : list_k ≠ [] := by simp [Int.range]; linarith
+    let k : ℤ := ArgMax list_k hlist_k (fun i => f (g x + g y + i))
+  almostAdditive x y := by 
+    let list_k : List ℤ := Int.range (-g.bound) (g.bound + 1)
+    have hg : ∃ i ∈ list_k, g (x+y) - g x - g y = i := by
+      /- simp [Int.range]; have hgg := g.almostAdditive x y; -/ 
+      use (g (x+y) - g x - g y); simp; 
+      /- linarith [Int.natAbs, Int.le_natAbs .., List.mem_range ..] -/
+      sorry
+      /- linarith [g.almostAdditive .., Int.natAbs_neg, Int.natAbs_add_le] -/
+    have hlist_k : list_k ≠ [] := by simp [Int.range]; linarith
+    let k : ℤ := ArgMax list_k hlist_k (fun i => f (g x + g y + i))
+    have hf : f (g x + g y + k) 
+        ≤ f (g x) + f (g y) + f (k) + 2*f.bound := by
+      linarith 
+        [@Int.le_natAbs (f (g x + g y + k) - f (g x + g y) - f (k)),
+        f.almostAdditive ..,
+        @Int.le_natAbs (f (g x + g y) - f (g x) - f (g y)),
+        f.almostAdditive (g x) (g y),
+        Int.le_natAbs]
+    have hk : ∀ i ∈ list_k, f (g x + g y + i) ≤ f (g x + g y + k) := by
+      apply le_ArgMax list_k hlist_k (fun i => f (g x + g y + i))
+      /- simp [Int.range]; use 2*g.bound; exact ⟨by simp; linarith, by simp; linarith⟩ -/
+    have : f (g (x + y)) - f (g x) - f (g y) ≤ f (k) + 2*f.bound := by 
+
+      sorry
+    simp [hf] at hg; linarith [Int.le_natAbs]
+
+=======
 protected def comp  (f₁ f₂ : QuasiMorphism ℤ) : QuasiMorphism ℤ where
   toFun := f₁ ∘ f₂
   almostAdditive :=
@@ -345,6 +386,7 @@ protected def comp  (f₁ f₂ : QuasiMorphism ℤ) : QuasiMorphism ℤ where
     let ⟨_, h₂⟩ := f₂.almostAdditive
     -- bound is filled in based on the proof :)
     ⟨_, AlmostAdditive.comp h₁ h₂⟩
+>>>>>>> refs/remotes/origin/master
 
 instance : AddCommGroup (QuasiMorphism G) where
   add := QuasiMorphism.add
