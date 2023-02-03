@@ -288,24 +288,35 @@ calc |(-f (x + y)) - (-f x) - (-f y)|
 protected theorem comp
     ⦃f₁ : ℤ → ℤ⦄ ⦃bound₁ : ℕ⦄ (h₁ : AlmostAdditive f₁ bound₁)
     ⦃f₂ : ℤ → ℤ⦄ ⦃bound₂ : ℕ⦄ (h₂ : AlmostAdditive f₂ bound₂)
-  : AlmostAdditive (f₁ ∘ f₂) sorry :=
-fun x y => by
-  have hg : f₂ (x+y) ≤ f₂ x + f₂ y + bound₂ := by
-    linarith [Int.le_natAbs, h₂.almost_additive ..]
-  have hf (k : ℤ): f₁ (f₂ x + f₂ y + k)
-      ≤ f₁ (f₂ x) + f₁ (f₂ y) + f₁ (k) + 2*bound₁ := by
-    linarith
-      [@Int.le_natAbs (f₁ (f₂ x + f₂ y + k) - f₁ (f₂ x + f₂ y) - f₁ (k)),
-       h₁.almost_additive ..,
-       @Int.le_natAbs (f₁ (f₂ x + f₂ y) - f₁ (f₂ x) - f₁ (f₂ y)),
-       h₁.almost_additive (f₂ x) (f₂ y),
-       Int.le_natAbs]
-  -- k = argmax{f₁(f₂(x) + f₂(y) + k}} for k in ℤ ∩ [-bound₂, bound₂]
-  let k : ℕ := sorry
-  have hk : f₁ (f₂ x + f₂ y + bound₂) ≤ f₁ (f₂ x + f₂ y + k) := sorry
-  have : f₁ (f₂ (x + y)) - f₁ (f₂ x) - f₁ (f₂ y) ≤ f₁ (k) + 2*bound₁ := by
-    sorry
-  sorry
+  : AlmostAdditive (f₁ ∘ f₂) <| (bound₁ + |f₁ 1|) * bound₂ + bound₁ * 3 :=
+fun x y => calc
+  |f₁ (f₂ (x + y)) - f₁ (f₂ x) - f₁ (f₂ y)|
+    = |(f₁ ((f₂ (x + y) - f₂ x - f₂ y) + (f₂ x + f₂ y))
+        - f₁ (f₂ (x + y) - f₂ x - f₂ y) - f₁ (f₂ x + f₂ y))
+       + (f₁ (f₂ (x + y) - f₂ x - f₂ y))
+       + (f₁ (f₂ x + f₂ y) - f₁ (f₂ x) - f₁ (f₂ y))|
+        := congrArg Int.natAbs <| by
+             conv in f₂ (x + y) =>
+               rw [←Int.sub_add_cancel (f₂ (x + y)) (f₂ x + f₂ y), ←Int.sub_sub]
+             linarith
+  _ ≤ |f₁ ((f₂ (x + y) - f₂ x - f₂ y) + (f₂ x + f₂ y))
+        - f₁ (f₂ (x + y) - f₂ x - f₂ y) - f₁ (f₂ x + f₂ y)|
+      + |f₁ (f₂ (x + y) - f₂ x - f₂ y)|
+      + |f₁ (f₂ x + f₂ y) - f₁ (f₂ x) - f₁ (f₂ y)|
+        := Trans.trans (Int.natAbs_add_le ..)
+                       (Nat.add_le_add_right (Int.natAbs_add_le ..) _)
+  _ ≤ bound₁
+      + ((bound₁ + |f₁ 1|) * |f₂ (x + y) - f₂ x - f₂ y| + bound₁)
+      + bound₁
+        := by refine Nat.add_le_add (Nat.add_le_add ?_ ?complex) ?_
+              case complex =>
+                conv in f₁ _ => arg 1; rewrite [←zsmul_int_one (_ - _ - _)]
+                apply h₁.linear_growth_upper_bound
+              all_goals apply h₁.almost_additive
+  _ = (bound₁ + |f₁ 1|) * |f₂ (x + y) - f₂ x - f₂ y| + bound₁ * 3 := by linarith
+  _ ≤ (bound₁ + |f₁ 1|) * bound₂ + bound₁ * 3
+        := h₂.almost_additive .. |> Nat.mul_le_mul_left (k := _)
+                                 |> Nat.add_le_add_right (k := _)
 
 end AlmostAdditive
 
