@@ -12,8 +12,24 @@ Reference(s):
 -- exact `simp only`s for every use. However, this results in huge lists
 -- of lemmas sometimes, so this hasn't been done for now.
 
--- For convenience. We can think about scoping this with sections later.
-local notation (priority := high) "|" x "|" => Int.natAbs x
+/-! # Absolute value notation for convenience.
+We can think about scoping this with sections later. -/
+
+/- This conflicts with match-case notation. -/
+-- 	local notation (priority := high) "|" x "|" => Int.natAbs x
+/- This is copied with modifications from Mathlib.Algebra.Abs. -/
+/- Splitting into `syntax` and `macro_rules` seems to be necessary to use `local`. -/
+local syntax (name := __natAbs) atomic("|" noWs) term noWs "|" : term
+macro_rules (kind := __natAbs) | `(|$x:term|) => `(Int.natAbs $x)
+/- This is supposedly automatically local and prevents an instance for
+`Abs ℤ` which would conflict with the above notation. -/
+attribute [-instance] Neg.toHasAbs
+/- This should make the pretty printer use this notation.
+Copied with modifications from https://github.com/leanprover/lean4/issues/2045#issuecomment-1396168913. -/
+@[local app_unexpander Int.natAbs]
+private def __natAbs_unexpander : Lean.PrettyPrinter.Unexpander
+| `($(_) $n:term) => `(|$n|)
+| _ => throw ()
 
 variable {G : Type u} [AddCommGroup G]
 
