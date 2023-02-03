@@ -81,7 +81,7 @@ set_option hygiene false in
 open Lean (TSyntax) in open Lean.Syntax in
 macro_rules (kind := __localWrapper)
 | `(local_wrapper $field:ident $[$args:num]?) =>
-  `(local_wrapper $field $[$args]? using bound)
+  `(local_wrapper $field $[$args]? using _)
 | `(local_wrapper $field:ident $[$args:num]? using $bound:term) => do
   let hField : TSyntax `term ← `(h.$field:ident)
   let secondTerm : TSyntax `term ← match args with
@@ -214,19 +214,19 @@ local_wrapper almost_zero 0
 -/
 
 lemma almost_neg : bdd f (-g) - -f g for all (g : G) :=
-local_wrapper almost_neg 0 using bound * 2
+local_wrapper almost_neg 0
 
 lemma almost_smul : bdd f (m • g) - m * f g for all (g : G) :=
-local_wrapper almost_smul 1 using bound * (|m| + 1)
+local_wrapper almost_smul 1
 
 private lemma almost_smul_comm
   : bdd n * f (m • g) - m * f (n • g) for all (g : G) :=
-local_wrapper almost_smul_comm 2 using bound * (|m| + |n| + 2)
+local_wrapper almost_smul_comm 2
 
 /- Not useful, since we don't say anything about what the bound is.
 private lemma almost_smul_comm' (f : QuasiMorphism ℤ) (m n : ℤ)
   : bdd n * f m - m * f n :=
-local_wrapper almost_smul_comm' using bound * (|m| + |n| + 2)
+local_wrapper almost_smul_comm'
 -/
 
 end QuasiMorphism
@@ -287,9 +287,10 @@ variable (f f₁ f₂ : QuasiMorphism G)
 protected def add : QuasiMorphism G where
   toFun := f₁ + f₂
   almostAdditive :=
-    let ⟨bound₁, h₁⟩ := f₁.almostAdditive
-    let ⟨bound₂, h₂⟩ := f₂.almostAdditive
-    ⟨bound₁ + bound₂, AlmostAdditive.add h₁ h₂⟩
+    let ⟨_, h₁⟩ := f₁.almostAdditive
+    let ⟨_, h₂⟩ := f₂.almostAdditive
+    -- bound is filled in based on the proof :)
+    ⟨_, AlmostAdditive.add h₁ h₂⟩
 
 protected def neg : QuasiMorphism G where
   toFun := -f
@@ -299,9 +300,10 @@ protected def neg : QuasiMorphism G where
 protected def comp  (f₁ f₂ : QuasiMorphism ℤ) : QuasiMorphism ℤ where
   toFun := f₁ ∘ f₂
   almostAdditive :=
-    let ⟨bound₁, h₁⟩ := f₁.almostAdditive
-    let ⟨bound₂, h₂⟩ := f₂.almostAdditive
-    ⟨sorry, AlmostAdditive.comp h₁ h₂⟩
+    let ⟨_, h₁⟩ := f₁.almostAdditive
+    let ⟨_, h₂⟩ := f₂.almostAdditive
+    -- bound is filled in based on the proof :)
+    ⟨_, AlmostAdditive.comp h₁ h₂⟩
 
 instance : AddCommGroup (QuasiMorphism G) where
   add := QuasiMorphism.add
