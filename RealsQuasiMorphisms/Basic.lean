@@ -189,6 +189,26 @@ private lemma almost_smul_comm'
   conv => lhs; rewrite [←congrArg f (zsmul_int_one m), ←congrArg f (zsmul_int_one n)]
   exact h.almost_smul_comm m n 1
 
+private lemma linear_growth_upper_bound
+  : |f (n • g)| ≤ (bound + |f g|) * |n| + bound :=
+calc |f (n • g)| = |f (n • g) - n * f g + n * f g| := by rw [Int.sub_add_cancel]
+               _ ≤ |f (n • g) - n * f g| + |n * f g| := Int.natAbs_add_le ..
+               _ ≤ bound * (|n| + 1) + |n| * |f g|
+                     := Int.natAbs_mul .. ▸
+                          Nat.add_le_add_right (h.almost_smul ..) _
+               _ ≤ (bound + |f g|) * |n| + bound := by linarith
+
+private lemma linear_growth_lower_bound
+  : (|f g| - bound) * |n| - bound ≤ |f (n • g)| := by
+  rewrite [tsub_mul, Nat.sub_sub, ←Nat.mul_succ]
+  apply Nat.sub_le_of_le_add; rewrite [Nat.add_comm]
+  calc |f g| * |n| = |n * f g| := by rw [Nat.mul_comm, ←Int.natAbs_mul]
+    _ = |n * f g - f (n • g) + f (n • g)| := by congr; linarith
+    _ ≤ |n * f g - f (n • g)| + |f (n • g)| := Int.natAbs_add_le ..
+    _ = |f (n • g) - n * f g| + |f (n • g)|
+          := congrArg (· + _) <| by rewrite [←Int.natAbs_neg]; congr; linarith
+    _ ≤ bound * (|n| + 1) + |f (n • g)| := Nat.add_le_add_right (h.almost_smul ..) _
+
 end AlmostAdditive
 
 namespace QuasiMorphism
@@ -228,6 +248,16 @@ private lemma almost_smul_comm' (f : QuasiMorphism ℤ) (m n : ℤ)
   : bdd n * f m - m * f n :=
 local_wrapper almost_smul_comm'
 -/
+
+private lemma linear_growth_upper_bound
+  : ∃ a b : ℕ, ∀ n : ℤ, |f (n • g)| ≤ a * |n| + b :=
+let ⟨_, h⟩ := f.almostAdditive
+⟨_, _, h.linear_growth_upper_bound (g := g)⟩
+
+private lemma linear_growth_lower_bound
+  : ∃ a b : ℕ, ∀ n : ℤ, a * |n| - b ≤ |f (n • g)| :=
+let ⟨_, h⟩ := f.almostAdditive
+⟨_, _, h.linear_growth_lower_bound (g := g)⟩
 
 end QuasiMorphism
 
