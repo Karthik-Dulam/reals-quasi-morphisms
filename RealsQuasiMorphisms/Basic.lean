@@ -1,7 +1,5 @@
-import Mathlib.Data.Int.AbsoluteValue
 import Mathlib.Algebra.Group.Basic
 import Mathlib.Tactic.Linarith
-import Mathlib.Tactic.LibrarySearch
 
 /-! Defines quasi-morphisms from an abelian group to ℤ and algebraic operations on them.
 
@@ -13,7 +11,7 @@ Reference(s):
 -- exact `simp only`s for every use. However, this results in huge lists
 -- of lemmas sometimes, so this hasn't been done for now.
 
-/-! # Absolute value notation for convenience.
+/-! # Absolute value notation for convenience
 We can think about scoping this with sections later. -/
 
 /- This conflicts with match-case notation. -/
@@ -147,7 +145,7 @@ lemma almost_smul : |f (m • g) - m * f g| ≤ bound * (|m| + 1) := by
   case negSucc.zero =>
     rewrite [show Int.negSucc Nat.zero = -1 by rfl]; simpa using h.almost_neg g
   case negSucc.succ m hᵢ =>
-    conv => lhs; rewrite [show Int.negSucc m.succ = Int.negSucc m - 1 by rfl]
+    conv => lhs; rewrite [←Int.negSucc_sub_one]
     rewrite [sub_zsmul, one_zsmul, sub_mul, one_mul]
     calc |f (Int.negSucc m • g + -g) - (Int.negSucc m * f g - f g)|
         = |(-(f (Int.negSucc m • g) - f (Int.negSucc m • g + -g) - f g))
