@@ -20,7 +20,7 @@ We can think about scoping this with sections later. -/
 -- 	local notation (priority := high) "|" x "|" => Int.natAbs x
 /- This is copied with modifications from Mathlib.Algebra.Abs. -/
 /- Splitting into `syntax` and `macro_rules` seems to be necessary to use `local`. -/
-local syntax (name := __natAbs) atomic("|" noWs) term noWs "|" : term
+local syntax:arg (name := __natAbs) atomic("|" noWs) term:min noWs "|" : term
 macro_rules (kind := __natAbs) | `(|$x:term|) => `(Int.natAbs $x)
 /- This is supposedly automatically local and prevents an instance for
 `Abs ℤ` which would conflict with the above notation. -/
