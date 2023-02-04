@@ -1,5 +1,7 @@
 import Mathlib.Algebra.Group.Basic
 import Mathlib.Tactic.Linarith
+import Mathlib.GroupTheory.Subgroup.Basic
+import Mathlib.GroupTheory.QuotientGroup
 
 /-! Defines quasi-morphisms from an abelian group to ℤ and algebraic operations on them.
 
@@ -355,6 +357,28 @@ instance : AddCommGroup (QuasiMorphism G) where
   add_zero f := by intros; ext; apply Int.add_zero
   neg := QuasiMorphism.neg
   add_left_neg := by intros; ext; apply Int.add_left_neg
+
+
+def BoundedQuasiMorphs : AddSubgroup (QuasiMorphism G) where
+  carrier := {f | ∃ bound, ∀ g, |f g| ≤ bound}
+
+  add_mem' := fun {f₁} {f₂} ⟨bound₁, h₁⟩  ⟨bound₂, h₂⟩ => 
+    ⟨bound₁ + bound₂, fun g => by
+      have hf : (f₁ + f₂) g = f₁ g + f₂ g := rfl
+      rewrite [hf]; linarith [Int.natAbs_add_le .., h₁ g, h₂ g]⟩
+
+  zero_mem' := ⟨0, fun _ => Nat.le_refl ..⟩
+
+  neg_mem' := fun {f} h => 
+    let ⟨bound, h⟩ := h
+    ⟨bound, fun g => by
+      have hf : (-f) g = -f g := rfl
+      simp [hf, h]⟩
+
+/- #reduce BoundedQuasiMorphs -/
+/- def BoundedQuasiMorphs_is_Normal : (BoundedQuasiMorphs (BoundedQuasiMorphs G)).Normal := -/ 
+  /- AddSubgroup.normal_of_comm -/
+
 
 end QuasiMorphism
 
