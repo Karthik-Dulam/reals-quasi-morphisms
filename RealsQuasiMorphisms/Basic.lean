@@ -12,28 +12,8 @@ Reference(s):
 1. http://web.science.mq.edu.au/~street/EffR.pdf
 -/
 
--- Note: we can avoid the AbsoluteValue import by using simp? to get
--- exact `simp only`s for every use. However, this results in huge lists
--- of lemmas sometimes, so this hasn't been done for now.
-
-/-! # Absolute value notation for convenience
-We can think about scoping this with sections later. -/
-
-/- This conflicts with match-case notation. -/
--- 	local notation (priority := high) "|" x "|" => Int.natAbs x
-/- This is copied with modifications from Mathlib.Algebra.Abs. -/
-/- Splitting into `syntax` and `macro_rules` seems to be necessary to use `local`. -/
-local syntax:arg (name := __natAbs) atomic("|" noWs) term:min noWs "|" : term
-macro_rules (kind := __natAbs) | `(|$x:term|) => `(Int.natAbs $x)
-/- This is supposedly automatically local and prevents an instance for
-`Abs ℤ` which would conflict with the above notation. -/
-attribute [-instance] Neg.toHasAbs
-/- This should make the pretty printer use this notation.
-Copied with modifications from https://github.com/leanprover/lean4/issues/2045#issuecomment-1396168913. -/
-@[local app_unexpander Int.natAbs]
-private def __natAbs_unexpander : Lean.PrettyPrinter.Unexpander
-| `($(_) $n:term) => `(|$n|)
-| _ => throw ()
+/- Use absolute value notation defined in `Util.Arithemtic`. -/
+open scoped Int.natAbs
 
 /-! # Definition of `AlmostAdditive` and `AlmostHom` -/
 variable {G : Type _}

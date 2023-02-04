@@ -50,27 +50,51 @@ end
 end NatIneqs
 
 
+/-! # Absolute value notation for convenience -/
+namespace Int.natAbs            -- scoped to this namespace
+
+/- This conflicts with match-case notation. -/
+-- 	local notation (priority := high) "|" x "|" => Int.natAbs x
+/- This is copied with modifications from Mathlib.Algebra.Abs. -/
+/- Splitting into `syntax` and `macro_rules` seems to be necessary to use `local`. -/
+scoped syntax:arg (name := __notation) (priority := default+1)
+  atomic("|" noWs) term:min noWs "|" : term
+scoped macro_rules (kind := __notation)
+  | `(|$x:term|) => `(Int.natAbs $x)
+
+/- This should make the pretty printer use this notation.
+Copied with modifications from https://github.com/leanprover/lean4/issues/2045#issuecomment-1396168913. -/
+@[scoped app_unexpander Int.natAbs]
+private def __unexpander : Lean.PrettyPrinter.Unexpander
+| `($(_) $n:term) => `(|$n|)
+| _ => throw ()
+
+end Int.natAbs
+
+
 abbrev Int.diff : ℤ → ℤ → ℕ := (· - · |>.natAbs)
 
 -- Lemmas about Int.natAbs and Int.diff
 namespace Int
 variable (a b c d : ℤ)
 
-lemma natAbs_add_le₃ : (a + b + c).natAbs ≤ a.natAbs + b.natAbs + c.natAbs :=
+open scoped Int.natAbs
+
+lemma natAbs_add_le₃ : |a + b + c| ≤ |a| + |b| + |c| :=
   /- `by linarith [Int.natAbs_add_le (a + b) c, Int.natAbs_add_le a b]`
   works, but I'm avoiding it. -/
   Nat.le_trans_le_sum_left (Int.natAbs_add_le (a + b) c)
                            (Int.natAbs_add_le a b)
 
 lemma natAbs_add_le₄
-    : (a + b + c + d).natAbs ≤ a.natAbs + b.natAbs + c.natAbs + d.natAbs :=
+    : |a + b + c + d| ≤ |a| + |b| + |c| + |d| :=
   /- `by linarith [Int.natAbs_add_le (a + b + c) d, Int.natAbs_add_le₃ a b c]`
   works, but I'm avoiding it. -/
   Nat.le_trans_le_sum_left (Int.natAbs_add_le (a + b + c) d)
                            (Int.natAbs_add_le₃ a b c)
 
 
-@[simp] lemma diff_def : a.diff b = (a - b).natAbs := rfl
+@[simp] lemma diff_def : a.diff b = |a - b| := rfl
 
 lemma diff_self_eq_zero : a.diff a = 0 := by
   unfold diff natAbs; rw [Int.sub_self a]
