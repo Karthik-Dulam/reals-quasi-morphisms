@@ -373,13 +373,13 @@ variable (G) in
 /-- The subgroup of `AlmostHom G` consisting of bounded quasi-morphisms. -/
 def boundedAlmostHoms : AddSubgroup (AlmostHom G) where
   carrier := {f | ∃ bound : ℕ, Bounded f bound}
-  add_mem' {f₁ f₂} := fun ⟨bound₁, h₁⟩ ⟨bound₂, h₂⟩ => ⟨_, fun g =>
+  add_mem' {f₁ f₂} := fun ⟨bound₁, h₁⟩ ⟨bound₂, h₂⟩ => .intro _ fun g =>
     calc |f₁ g + f₂ g| ≤ |f₁ g| + |f₂ g| := Int.natAbs_add_le ..
-                     _ ≤ bound₁ + bound₂ := Nat.add_le_add (h₁ _) (h₂ _)⟩
+                     _ ≤ bound₁ + bound₂ := Nat.add_le_add (h₁ g) (h₂ g)
   zero_mem' := ⟨0, fun _ => show |(0:ℤ)| ≤ 0 from Nat.le_refl 0⟩
-  neg_mem' {f} := fun ⟨bound, h⟩ => ⟨_, fun g =>
-    calc |(-f g)| = |f g| := Int.natAbs_neg (f g)
-                _ ≤ bound := h g⟩
+  neg_mem' {f} := fun ⟨bound, h⟩ => .intro _ fun g =>
+    calc |(-f g)| = |f g| := Int.natAbs_neg ..
+                _ ≤ bound := h g
 
 variable (G) in
 def QuasiHom := AlmostHom G ⧸ boundedAlmostHoms G
