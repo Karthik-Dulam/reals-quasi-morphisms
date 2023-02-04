@@ -169,7 +169,7 @@ private lemma almost_smul_comm'
     : |n * f m - m * f n| ≤ bound * (|m| + |n| + 2) := by
   lax_exact h.almost_smul_comm m n 1 <;> rw [zsmul_int_one]
 
-private lemma linear_growth_upper_bound
+lemma linear_growth_upper_bound
   : |f (n • g)| ≤ (bound + |f g|) * |n| + bound :=
   calc |f (n • g)|
     ≤ |f (n • g) - n * f g| + |n * f g|
@@ -265,35 +265,6 @@ protected theorem neg : AlmostAdditive (-f) bound := fun x y =>
   _ = |f (x + y) - f x - f y|             := congrArg Int.natAbs (by linarith)
   _ ≤ bound                               := h ..
 
-protected theorem comp
-    ⦃f₁ : ℤ → ℤ⦄ ⦃bound₁ : ℕ⦄ (h₁ : AlmostAdditive f₁ bound₁)
-    ⦃f₂ : G → ℤ⦄ ⦃bound₂ : ℕ⦄ (h₂ : AlmostAdditive f₂ bound₂)
-  : AlmostAdditive (f₁ ∘ f₂) <| (bound₁ + |f₁ 1|) * bound₂ + bound₁ * 3 := fun x y =>
-  calc |f₁ (f₂ (x + y)) - f₁ (f₂ x) - f₁ (f₂ y)|
-    ≤ |f₁ (f₂ (x + y)) - f₁ (f₂ (x + y) - f₂ x - f₂ y) - f₁ (f₂ x + f₂ y)|
-      + |f₁ (f₂ (x + y) - f₂ x - f₂ y)|
-      + |f₁ (f₂ x + f₂ y) - f₁ (f₂ x) - f₁ (f₂ y)|
-        := by lax_exact Int.natAbs_add_le₃ (f₁ (f₂ (x + y)) - f₁ (f₂ (x + y) - f₂ x - f₂ y) - f₁ (f₂ x + f₂ y))
-                                           (f₁ (f₂ (x + y) - f₂ x - f₂ y))
-                                           (f₁ (f₂ x + f₂ y) - f₁ (f₂ x) - f₁ (f₂ y))
-              linarith
-  _ ≤ bound₁
-      + ((bound₁ + |f₁ 1|) * |f₂ (x + y) - f₂ x - f₂ y| + bound₁)
-      + bound₁
-        := by conv in f₁ (f₂ (x + y)) =>
-                /- Need `f₂ (x + y)` like this to use `h₁.almost_additive`. -/
-                rw [show f₂ (x + y) = (f₂ (x + y) - f₂ x - f₂ y) + (f₂ x + f₂ y)
-                    by linarith]
-              refine Nat.add_le_add₃ ?_ ?using_lemma ?_;
-              case using_lemma =>
-                lax_exact h₁.linear_growth_upper_bound (f₂ (x + y) - f₂ x - f₂ y) 1
-                rw [zsmul_int_one]
-              all_goals apply h₁.almost_additive
-  _ = (bound₁ + |f₁ 1|) * |f₂ (x + y) - f₂ x - f₂ y| + bound₁ * 3 := by linarith
-  _ ≤ (bound₁ + |f₁ 1|) * bound₂ + bound₁ * 3
-        := h₂.almost_additive .. |> Nat.mul_le_mul_left (k := _)
-                                 |> Nat.add_le_add_right (k := _)
-
 end AlmostAdditive
 
 namespace AlmostHom
@@ -322,15 +293,6 @@ instance : AddCommGroup (AlmostHom G) where
   add_zero f := by intros; ext; apply Int.add_zero
   neg := AlmostHom.neg
   add_left_neg := by intros; ext; apply Int.add_left_neg
-
-/-- Composition with a quasi-morphism on ℤ, returning another quasi-morphism. -/
-protected def comp  (f₁ : AlmostHom ℤ) (f₂ : AlmostHom G) : AlmostHom G where
-  toFun := f₁ ∘ f₂
-  almostAdditive :=
-    let ⟨_, h₁⟩ := f₁.almostAdditive
-    let ⟨_, h₂⟩ := f₂.almostAdditive
-    -- bound is filled in based on the proof :)
-    ⟨_, AlmostAdditive.comp h₁ h₂⟩
 
 end AlmostHom
 
@@ -365,5 +327,9 @@ variable (G) in
 def QuasiHom := AlmostHom G ⧸ boundedAlmostHoms G
 
 abbrev EudoxusReal := QuasiHom ℤ
+
+-- TypeClass inference does not unfold the definition of `QuasiHom`
+-- automatically so the instance must be defined manually
+instance : AddCommGroup (QuasiHom G) := by unfold QuasiHom; infer_instance
 
 end Quotient
