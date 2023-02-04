@@ -3,6 +3,9 @@ import Mathlib.Tactic.Linarith
 import Mathlib.GroupTheory.Subgroup.Basic
 import Mathlib.GroupTheory.QuotientGroup
 
+import Util.Arithmetic
+import Util.Tactics
+
 /-! Defines quasi-morphisms from an abelian group to ℤ and algebraic operations on them.
 
 Reference(s):
@@ -82,12 +85,15 @@ local syntax (name := __localWrapper) "local_wrapper " ident (num)? (" using " t
 set_option hygiene false in
 open Lean (TSyntax) in open Lean.Syntax in
 macro_rules (kind := __localWrapper)
+  /- `bound` is by default `_`, i.e., to be filled by unification. -/
 | `(local_wrapper $field:ident $[$args:num]?) =>
   `(local_wrapper $field $[$args]? using _)
 | `(local_wrapper $field:ident $[$args:num]? using $bound:term) => do
   let hField : TSyntax `term ← `(h.$field:ident)
   let secondTerm : TSyntax `term ← match args with
   | some numArgs => pure<| .mkArray numArgs.getNat (←`(_)) |> mkApp hField
+    /- If the number of args to apply the field of `h` to is not
+    specified, use `..`. -/
   | none         => `($hField ..)
   `(let ⟨bound, h⟩ := f.almostAdditive
     ⟨$bound, $secondTerm⟩)
@@ -101,27 +107,21 @@ variable (m n : ℤ) (g : G)
 lemma almost_additive : ∀ g₁ g₂ : G, |f (g₁ + g₂) - f g₁ - f g₂| ≤ bound := h
 
 /-- A quasi-morphism `f` maps 0 to 0, within an error of up to `f.bound`. -/
-lemma almost_zero : |f 0| ≤ bound := by simpa using h.almost_additive 0 0
-/-
-calc |f 0| = |(-f 0)|              := by rw [Int.natAbs_neg]
-         _ = |f (0+0) - f 0 - f 0| := congrArg Int.natAbs <|
-                                        by rewrite [add_zero]; linarith
+lemma almost_zero : |f 0| ≤ bound := -- by simpa using h.almost_additive 0 0
+  calc |f 0| = |f (0+0) - f 0 - f 0| := by rewrite [←Int.natAbs_neg]; congr 1
+                                           rewrite [add_zero]; linarith
          _ ≤ bound                 := h.almost_additive 0 0
--/
 
 /-- A quasi-morphism `f` respects negation, within an error of up to `f.bound * 2`. -/
 lemma almost_neg : |f (-g) - -f g| ≤ bound * 2 :=
-calc |f (-g) - (- (f g))| = |(f (-g) + f g - f 0) + f 0|
-                              := congrArg Int.natAbs <| by linarith
-                        _ ≤ |f (-g) + f g - f 0| + |f 0| := Int.natAbs_add_le ..
-                        _ = |f (-g + g) - f (-g) - f g| + |f 0|
-                              := by apply congrArg (· + |f 0|)
-                                    rewrite [←Int.natAbs_neg, ←add_left_neg g]
-                                    apply congrArg Int.natAbs; linarith
-                        _ ≤ bound * 2
-                              := Nat.mul_two .. ▸
-                                   Nat.add_le_add (h.almost_additive (-g) g)
-                                                  h.almost_zero
+  calc |f (-g) - (- (f g))|
+    ≤ |f (-g) + f g - f 0| + |f 0|
+        := by lax_exact Int.natAbs_add_le (f (-g) + f g - f 0) (f 0); linarith
+  _ = |f (-g + g) - f (-g) - f g| + |f 0|
+        := by congr 1; rewrite [←Int.natAbs_neg, ←add_left_neg g]
+              congr; linarith
+  _ ≤ bound * 2
+        := by linarith [h.almost_additive (-g) g, h.almost_zero]
 
 /- First inequality proven in reference 1. -/
 /-- A quasi-morphism `f` respects scaling by ℤ, within an error proportional to the scaling factor. -/
@@ -170,17 +170,16 @@ lemma almost_smul : |f (m • g) - m * f g| ≤ bound * (|m| + 1) := by
 one scale factor before and another after applying a quasi-morphism. -/
 private lemma almost_smul_comm
   : |n * f (m • g) - m * f (n • g)| ≤ bound * (|m| + |n| + 2) :=
-calc |n * f (m • g) - m * f (n • g)|
-    = |(n * f (m • g) - f ((m * n) • g)) + (f ((m * n) • g) - m * f (n • g))|
-        := congrArg Int.natAbs <| by linarith
-  _ ≤ |n * f (m • g) - f ((m * n) • g)| + |f ((m * n) • g) - m * f (n • g)|
-        := Int.natAbs_add_le ..
+  calc |n * f (m • g) - m * f (n • g)|
+    ≤ |f ((m * n) • g) - n * f (m • g)| + |f ((m * n) • g) - m * f (n • g)|
+        := Int.triangle_ineq' ..
   _ = |f (n • m • g) - n * f (m • g)| + |f (m • n • g) - m * f (n • g)|
-        := by conv => lhs; arg 1; rewrite [←Int.natAbs_neg, mul_zsmul']
-              conv => lhs; arg 2; rewrite [mul_zsmul]
-              congr; linarith
+              /- TODO find a better syntax for this - same-line ·'s -/
+        := by congr 3; (· rw [mul_zsmul']); (· rw [mul_zsmul])
   _ ≤ bound * (|n| + 1) + bound * (|m| + 1)
-        := Nat.add_le_add (h.almost_smul ..) (h.almost_smul ..)
+           /- In this case, writing `Nat.add_le_add` is easier than
+           specifying the almost_smul arguments for `linarith`. -/
+        := by apply Nat.add_le_add <;> apply h.almost_smul
   _ = bound * (|m| + |n| + 2) := by linarith
 
 /- `almost_smul_comm'` specialised to quasi-morphisms on integers and applied to 1.
@@ -188,28 +187,28 @@ Eq (1) of reference 1. -/
 private lemma almost_smul_comm'
         ⦃f : ℤ → ℤ⦄ ⦃bound : ℕ⦄ (h : AlmostAdditive f bound) (m n : ℤ)
     : |n * f m - m * f n| ≤ bound * (|m| + |n| + 2) := by
-  conv => lhs; rewrite [←congrArg f (zsmul_int_one m), ←congrArg f (zsmul_int_one n)]
-  exact h.almost_smul_comm m n 1
+  lax_exact h.almost_smul_comm m n 1 <;> rw [zsmul_int_one]
 
 private lemma linear_growth_upper_bound
   : |f (n • g)| ≤ (bound + |f g|) * |n| + bound :=
-calc |f (n • g)| = |f (n • g) - n * f g + n * f g| := by rw [Int.sub_add_cancel]
-               _ ≤ |f (n • g) - n * f g| + |n * f g| := Int.natAbs_add_le ..
-               _ ≤ bound * (|n| + 1) + |n| * |f g|
-                     := Int.natAbs_mul .. ▸
-                          Nat.add_le_add_right (h.almost_smul ..) _
-               _ ≤ (bound + |f g|) * |n| + bound := by linarith
+  calc |f (n • g)|
+    ≤ |f (n • g) - n * f g| + |n * f g|
+        := by lax_exact Int.natAbs_add_le (f (n • g) - n * f g) (n * f g); linarith
+  _ ≤ (bound + |f g|) * |n| + bound
+        := by linarith [h.almost_smul n g, Int.natAbs_mul n (f g)]
 
 private lemma linear_growth_lower_bound
   : (|f g| - bound) * |n| - bound ≤ |f (n • g)| := by
   rewrite [tsub_mul, Nat.sub_sub, ←Nat.mul_succ]
   apply Nat.sub_le_of_le_add; rewrite [Nat.add_comm]
-  calc |f g| * |n| = |n * f g| := by rw [Nat.mul_comm, ←Int.natAbs_mul]
-    _ = |n * f g - f (n • g) + f (n • g)| := by congr; linarith
-    _ ≤ |n * f g - f (n • g)| + |f (n • g)| := Int.natAbs_add_le ..
+  calc |f g| * |n|
+      = |n * f g|                       := by rw [Nat.mul_comm, Int.natAbs_mul]
+    _ ≤ |n * f g - f (n • g)| + |f (n • g)|
+          := by lax_exact Int.natAbs_add_le (n * f g - f (n • g)) (f (n • g)); linarith
     _ = |f (n • g) - n * f g| + |f (n • g)|
-          := congrArg (· + _) <| by rewrite [←Int.natAbs_neg]; congr; linarith
-    _ ≤ bound * (|n| + 1) + |f (n • g)| := Nat.add_le_add_right (h.almost_smul ..) _
+          := by congr 1; rewrite [←Int.natAbs_neg]
+                congr 1; linarith
+    _ ≤ bound * (|n| + 1) + |f (n • g)| := by linarith [h.almost_smul n g]
 
 end AlmostAdditive
 
@@ -273,47 +272,42 @@ variable ⦃f : G → ℤ⦄ ⦃bound : ℕ⦄ (h : AlmostAdditive f bound)
          ⦃f₂ : G → ℤ⦄ ⦃bound₂ : ℕ⦄ (h₂ : AlmostAdditive f₂ bound₂)
 
 protected theorem add : AlmostAdditive (f₁ + f₂) (bound₁ + bound₂) := fun x y =>
-calc |f₁ (x + y) + f₂ (x + y) - (f₁ x + f₂ x) - (f₁ y + f₂ y)|
+  calc |f₁ (x + y) + f₂ (x + y) - (f₁ x + f₂ x) - (f₁ y + f₂ y)|
     = |(f₁ (x + y) - f₁ x - f₁ y) + (f₂ (x + y) - f₂ x - f₂ y)|
-        := congrArg Int.natAbs <| by linarith
-  _ ≤ |f₁ (x + y) - f₁ x - f₁ y| + |f₂ (x + y) - f₂ x - f₂ y|
-        := Int.natAbs_add_le ..
-  _ ≤ bound₁ + bound₂
-        := Nat.add_le_add (h₁ ..) (h₂ ..)
+        := congrArg Int.natAbs (by linarith)
+  _ ≤ bound₁ + bound₂ := by transitivity
+                            · apply Int.natAbs_add_le
+                            · linarith [h₁ x y, h₂ x y]
 
 protected theorem neg : AlmostAdditive (-f) bound := fun x y =>
-calc |(-f (x + y)) - (-f x) - (-f y)|
+  calc |(-f (x + y)) - (-f x) - (-f y)|
     = |(-(-f (x + y) - (-f x) - (-f y)))| := by rw [Int.natAbs_neg]
-  _ = |f (x + y) - f x - f y|             := congrArg Int.natAbs <| by linarith
+  _ = |f (x + y) - f x - f y|             := congrArg Int.natAbs (by linarith)
   _ ≤ bound                               := h ..
 
 protected theorem comp
     ⦃f₁ : ℤ → ℤ⦄ ⦃bound₁ : ℕ⦄ (h₁ : AlmostAdditive f₁ bound₁)
     ⦃f₂ : G → ℤ⦄ ⦃bound₂ : ℕ⦄ (h₂ : AlmostAdditive f₂ bound₂)
-  : AlmostAdditive (f₁ ∘ f₂) <| (bound₁ + |f₁ 1|) * bound₂ + bound₁ * 3 :=
-fun x y => calc
-  |f₁ (f₂ (x + y)) - f₁ (f₂ x) - f₁ (f₂ y)|
-    = |(f₁ ((f₂ (x + y) - f₂ x - f₂ y) + (f₂ x + f₂ y))
-        - f₁ (f₂ (x + y) - f₂ x - f₂ y) - f₁ (f₂ x + f₂ y))
-       + (f₁ (f₂ (x + y) - f₂ x - f₂ y))
-       + (f₁ (f₂ x + f₂ y) - f₁ (f₂ x) - f₁ (f₂ y))|
-        := congrArg Int.natAbs <| by
-             conv in f₂ (x + y) =>
-               rw [←Int.sub_add_cancel (f₂ (x + y)) (f₂ x + f₂ y), ←Int.sub_sub]
-             linarith
-  _ ≤ |f₁ ((f₂ (x + y) - f₂ x - f₂ y) + (f₂ x + f₂ y))
-        - f₁ (f₂ (x + y) - f₂ x - f₂ y) - f₁ (f₂ x + f₂ y)|
+  : AlmostAdditive (f₁ ∘ f₂) <| (bound₁ + |f₁ 1|) * bound₂ + bound₁ * 3 := fun x y =>
+  calc |f₁ (f₂ (x + y)) - f₁ (f₂ x) - f₁ (f₂ y)|
+    ≤ |f₁ (f₂ (x + y)) - f₁ (f₂ (x + y) - f₂ x - f₂ y) - f₁ (f₂ x + f₂ y)|
       + |f₁ (f₂ (x + y) - f₂ x - f₂ y)|
       + |f₁ (f₂ x + f₂ y) - f₁ (f₂ x) - f₁ (f₂ y)|
-        := Trans.trans (Int.natAbs_add_le ..)
-                       (Nat.add_le_add_right (Int.natAbs_add_le ..) _)
+        := by lax_exact Int.natAbs_add_le₃ (f₁ (f₂ (x + y)) - f₁ (f₂ (x + y) - f₂ x - f₂ y) - f₁ (f₂ x + f₂ y))
+                                           (f₁ (f₂ (x + y) - f₂ x - f₂ y))
+                                           (f₁ (f₂ x + f₂ y) - f₁ (f₂ x) - f₁ (f₂ y))
+              linarith
   _ ≤ bound₁
       + ((bound₁ + |f₁ 1|) * |f₂ (x + y) - f₂ x - f₂ y| + bound₁)
       + bound₁
-        := by refine Nat.add_le_add (Nat.add_le_add ?_ ?complex) ?_
-              case complex =>
-                conv in f₁ _ => arg 1; rewrite [←zsmul_int_one (_ - _ - _)]
-                apply h₁.linear_growth_upper_bound
+        := by conv in f₁ (f₂ (x + y)) =>
+                /- Need `f₂ (x + y)` like this to use `h₁.almost_additive`. -/
+                rw [show f₂ (x + y) = (f₂ (x + y) - f₂ x - f₂ y) + (f₂ x + f₂ y)
+                    by linarith]
+              refine Nat.add_le_add₃ ?_ ?using_lemma ?_;
+              case using_lemma =>
+                lax_exact h₁.linear_growth_upper_bound (f₂ (x + y) - f₂ x - f₂ y) 1
+                rw [zsmul_int_one]
               all_goals apply h₁.almost_additive
   _ = (bound₁ + |f₁ 1|) * |f₂ (x + y) - f₂ x - f₂ y| + bound₁ * 3 := by linarith
   _ ≤ (bound₁ + |f₁ 1|) * bound₂ + bound₁ * 3
