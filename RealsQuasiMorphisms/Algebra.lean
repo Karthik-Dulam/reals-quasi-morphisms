@@ -1,4 +1,6 @@
 import Mathlib.Algebra.Field.Basic
+
+import Util.Arithmetic
 import RealsQuasiMorphisms.Basic
 
 open scoped Int.natAbs
