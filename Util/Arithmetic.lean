@@ -13,6 +13,22 @@ In another construction this caused a mysterious error, so I'm
 avoiding `linarith` for simple proofs where it's unnecessary and not
 especially convenient. -/
 
+section Identities
+namespace Int
+variable (a b c : ℤ)
+
+protected lemma sub_eq_neg_add : a - b = -b + a :=
+  Int.add_comm .. ▸ Int.sub_eq_add_neg ..
+
+protected lemma add_sub_cancel_right
+    : a + (b - a) = b := by
+  /- rewrite [Int.sub_eq_add_neg, Int.add_comm b (-a)]
+  apply Int.add_neg_cancel_left -/
+  rewrite [Int.add_comm]; apply Int.sub_add_cancel
+
+end Int
+end Identities
+
 /- These should probably be proved for any OrderedSemigroup or something. -/
 section NatIneqs
 variable {a₁ b₁ a₂ b₂ a₃ b₃ a₄ b₄ : ℕ}
