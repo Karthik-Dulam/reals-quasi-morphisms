@@ -94,7 +94,7 @@ lemma natAbs_add_le₄
                            (Int.natAbs_add_le₃ a b c)
 
 
-@[simp] lemma diff_def : a.diff b = |a - b| := rfl
+@[simp] lemma diff_eq : a.diff b = |a - b| := rfl
 
 lemma diff_self_eq_zero : a.diff a = 0 := by
   unfold diff natAbs; rw [Int.sub_self a]
