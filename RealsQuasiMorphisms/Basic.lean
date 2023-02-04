@@ -358,7 +358,45 @@ end AlgebraicStructure
 
 section Quotient
 
-def BoundedQuasiMorphs : AddSubgroup (QuasiMorphism G) where
+def Bounded (f : G → ℤ) (bound : ℕ) := ∀ g : G, |f g| ≤ bound
+
+/- We don't really need this, but we might as well prove it. -/
+variable {f : G → ℤ} {bound : ℕ} in
+lemma almost_additive_of_bounded (h : Bounded f bound)
+    : AlmostAdditive f (bound * 3) := fun g₁ g₂ =>
+  calc |f (g₁ + g₂) - f g₁ - f g₂|
+      ≤ |f (g₁ + g₂)| + |(-f g₁)| + |(-f g₂)| := Int.natAbs_add_le₃ ..
+    _ ≤ bound * 3 := by linarith [(f g₁).natAbs_neg, (f g₂).natAbs_neg,
+                                  h (g₁ + g₂), h g₁, h g₂]
+
+variable (G) in
+/-- The subgroup of `QuasiMorphism G` consisting of bounded quasi-morphisms. -/
+def boundedQuasiMorphisms : AddSubgroup (QuasiMorphism G) where
+  carrier := {f | ∃ bound : ℕ, Bounded f bound}
+  add_mem' {f₁ f₂} := fun ⟨bound₁, h₁⟩ ⟨bound₂, h₂⟩ => ⟨_, fun g =>
+    calc |f₁ g + f₂ g| ≤ |f₁ g| + |f₂ g| := Int.natAbs_add_le ..
+                     _ ≤ bound₁ + bound₂ := Nat.add_le_add (h₁ _) (h₂ _)⟩
+  zero_mem' := ⟨0, fun _ => show |(0:ℤ)| ≤ 0 from Nat.le_refl 0⟩
+  neg_mem' {f} := fun ⟨bound, h⟩ => ⟨_, fun g =>
+    calc |(-f g)| = |f g| := Int.natAbs_neg (f g)
+                _ ≤ bound := h g⟩
+
+/-
+def boundedQuasiMorphisms : AddSubgroup (QuasiMorphism G) where
+  carrier := {f | ∃ bound : ℕ, Bounded f bound}
+  add_mem' {f₁ f₂} := fun ⟨bound₁, h₁⟩ ⟨bound₂, h₂⟩ => ⟨bound₁ + bound₂, by
+    intro; show |f₁ _ + f₂ _| ≤ bound₁ + bound₂
+    linarith [Int.natAbs_add_le .., h₁ _, h₂ _]⟩
+  zero_mem' := ⟨0, by
+    intro; show |(0:ℤ)| ≤ 0
+    trivial⟩
+  neg_mem' {f} := fun ⟨bound, h⟩ => ⟨bound, by
+    intro; show |(-f _)| ≤ bound
+    linarith [Int.natAbs_neg .., h _]⟩
+-/
+
+/-
+def boundedQuasiMorphisms : AddSubgroup (QuasiMorphism G) where
   carrier := {f | ∃ bound, ∀ g, |f g| ≤ bound}
 
   add_mem' := fun {f₁} {f₂} ⟨bound₁, h₁⟩  ⟨bound₂, h₂⟩ => 
@@ -373,9 +411,8 @@ def BoundedQuasiMorphs : AddSubgroup (QuasiMorphism G) where
     ⟨bound, fun g => by
       have hf : (-f) g = -f g := rfl
       simp [hf, h]⟩
+-/
 
-/- #reduce BoundedQuasiMorphs -/
-/- def BoundedQuasiMorphs_is_Normal : (BoundedQuasiMorphs (BoundedQuasiMorphs G)).Normal := -/ 
-  /- AddSubgroup.normal_of_comm -/
+def EudoxusReal := QuasiMorphism ℤ ⧸ boundedQuasiMorphisms ℤ
 
 end Quotient
