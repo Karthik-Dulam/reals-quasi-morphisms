@@ -46,23 +46,23 @@ protected def AlmostHom.comp  (f₁ : AlmostHom ℤ) (f₂ : AlmostHom G) : Almo
     ⟨_, AlmostAdditive.comp h₁ h₂⟩
 
 theorem AlmostAdditive.comp_congr_right
-        ⦃f  : ℤ → ℤ⦄ ⦃bound' : ℕ⦄ (h : AlmostAdditive f  bound')
-        ⦃f₁ f₂ : G → ℤ⦄ ⦃bound : ℕ⦄ (h' : Bounded (-f₁ + f₂) bound)
+        ⦃f  : ℤ → ℤ⦄ ⦃bound : ℕ⦄ (h : AlmostAdditive f  bound)
+        ⦃f₁ f₂ : G → ℤ⦄ ⦃bound' : ℕ⦄ (h' : Bounded (-f₁ + f₂) bound')
     : Bounded (-f.comp f₁ + f.comp f₂) <|
-        (bound' + |f 1|) * bound + bound' * 2 := fun g =>
+        (bound + |f 1|) * bound' + bound * 2 := fun g =>
   calc |(-f (f₁ g)) + f (f₂ g)|
       = |f (f₁ g + (f₂ g - f₁ g)) - f (f₁ g) - f (f₂ g - f₁ g)
          + f (f₂ g - f₁ g)|
           := congrArg Int.natAbs <| by
                rw [Int.add_sub_cancel_right (f₁ g) (f₂ g),
                    ←Int.sub_eq_neg_add, Int.sub_add_cancel]
-    _ ≤ bound' + ((bound' + |f 1|) * |f₂ g - f₁ g| + bound')
+    _ ≤ bound + ((bound + |f 1|) * |f₂ g - f₁ g| + bound)
           := Trans.trans (Int.natAbs_add_le ..) <| Nat.add_le_add
                (h.almost_additive ..)
                (h.linear_growth_upper_bound_int ..)
-    _ ≤ (bound' + |f 1|) * bound + bound' * 2
-          := by have : |f₂ g - f₁ g| ≤ bound := Int.sub_eq_neg_add .. ▸ h' g
-                have := Nat.mul_le_mul_left (bound' + (f 1).natAbs) this
+    _ ≤ (bound + |f 1|) * bound' + bound * 2
+          := by have : |f₂ g - f₁ g| ≤ bound' := Int.sub_eq_neg_add .. ▸ h' g
+                have := Nat.mul_le_mul_left (bound + (f 1).natAbs) this
                 linarith [this]
 
 namespace QuasiHom
