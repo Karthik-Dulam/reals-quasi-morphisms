@@ -35,7 +35,7 @@ private def __natAbs_unexpander : Lean.PrettyPrinter.Unexpander
 | `($(_) $n:term) => `(|$n|)
 | _ => throw ()
 
-/-! # Definition of `AlmostAdditive` and `QuasiMorphism` -/
+/-! # Definition of `AlmostAdditive` and `AlmostHom` -/
 variable {G : Type _}
 
 section TypeDef
@@ -46,31 +46,31 @@ def AlmostAdditive (f : G → ℤ) (bound : ℕ) :=
 
 /- Remark: we have used an `∃ ...` field rather than flattening out
 with an additional `bound` field so that the same function with a
-different bound is the same `QuasiMorphism`. This is necessary for
-`QuasiMorphism` to be a lawful algebraic structure at all, since most
-of the laws only hold for the functions, not for the bounds. -/
-variable (G) in structure QuasiMorphism where
+different bound is the same `AlmostHom`. This is necessary for
+`AlmostHom` to be a lawful algebraic structure at all, since most of
+the laws only hold for the functions, not for the bounds. -/
+variable (G) in structure AlmostHom where
   toFun : G → ℤ
   almostAdditive : ∃ bound : ℕ, AlmostAdditive toFun bound
 
-instance : CoeFun (QuasiMorphism G) fun _ => G → ℤ where
-  coe := QuasiMorphism.toFun
+instance : CoeFun (AlmostHom G) fun _ => G → ℤ where
+  coe := AlmostHom.toFun
 
 @[ext]
-theorem QuasiMorphism.ext
-  : {f₁ f₂ : QuasiMorphism G} → f₁.toFun = f₂.toFun → f₁ = f₂
+theorem AlmostHom.ext
+  : {f₁ f₂ : AlmostHom G} → f₁.toFun = f₂.toFun → f₁ = f₂
 | ⟨_f, _⟩, ⟨.(_f), _⟩, rfl => rfl
 
 end TypeDef
 
 
-/-! # Properties and structure of `AlmostAdditive`/`QuasiMorphism` -/
+/-! # Properties and structure of `AlmostAdditive`/`AlmostHom` -/
 variable [AddCommGroup G]
 
 /-! Because we can no longer directly access the bound associated with
 a quasi-morphism, we first prove lemmas assuming an AlmostAdditive
-hypothesis. Then we bundle them up into lemmas taking a QuasiMorphism
-and showing existential statements. -/
+hypothesis. Then we bundle them up into lemmas taking a AlmostHom and
+showing existential statements. -/
 
 
 /- Perhaps we should automate this more, similar to `to_additive`. -/
@@ -212,8 +212,8 @@ private lemma linear_growth_lower_bound
 
 end AlmostAdditive
 
-namespace QuasiMorphism
-variable (f : QuasiMorphism G) (g : G) (m n : ℤ)
+namespace AlmostHom
+variable (f : AlmostHom G) (g : G) (m n : ℤ)
 
 /- `bdd <expr>` says there is some `bound : ℕ` which |<expr>| is bounded by.
 (Admittedly, this is tautological.)
@@ -245,7 +245,7 @@ private lemma almost_smul_comm
 local_wrapper almost_smul_comm 2
 
 /- Not useful, since we don't say anything about what the bound is.
-private lemma almost_smul_comm' (f : QuasiMorphism ℤ) (m n : ℤ)
+private lemma almost_smul_comm' (f : AlmostHom ℤ) (m n : ℤ)
   : bdd n * f m - m * f n :=
 local_wrapper almost_smul_comm'
 -/
@@ -260,7 +260,7 @@ private lemma linear_growth_lower_bound
 let ⟨_, h⟩ := f.almostAdditive
 ⟨_, _, h.linear_growth_lower_bound (g := g)⟩
 
-end QuasiMorphism
+end AlmostHom
 
 end AlmostProperties
 
@@ -316,12 +316,12 @@ protected theorem comp
 
 end AlmostAdditive
 
-namespace QuasiMorphism
-variable (f f₁ f₂ : QuasiMorphism G)
+namespace AlmostHom
+variable (f f₁ f₂ : AlmostHom G)
 
 /- Haven't written local_wrapper to be able to destructure multiple
 `AlmostAdditive` hypotheses yet. -/
-protected def add : QuasiMorphism G where
+protected def add : AlmostHom G where
   toFun := f₁ + f₂
   almostAdditive :=
     let ⟨_, h₁⟩ := f₁.almostAdditive
@@ -329,22 +329,22 @@ protected def add : QuasiMorphism G where
     -- bound is filled in based on the proof :)
     ⟨_, AlmostAdditive.add h₁ h₂⟩
 
-protected def neg : QuasiMorphism G where
+protected def neg : AlmostHom G where
   toFun := -f
   almostAdditive := local_wrapper neg 0
 
-instance : AddCommGroup (QuasiMorphism G) where
-  add := QuasiMorphism.add
+instance : AddCommGroup (AlmostHom G) where
+  add := AlmostHom.add
   add_comm := by intros; ext; apply Int.add_comm
   add_assoc := by intros; ext; apply Int.add_assoc
   zero := ⟨0, 0, fun _ _ => Nat.le_refl ..⟩
   zero_add := by intros; ext; apply Int.zero_add
   add_zero f := by intros; ext; apply Int.add_zero
-  neg := QuasiMorphism.neg
+  neg := AlmostHom.neg
   add_left_neg := by intros; ext; apply Int.add_left_neg
 
 /-- Composition with a quasi-morphism on ℤ, returning another quasi-morphism. -/
-protected def comp  (f₁ : QuasiMorphism ℤ) (f₂ : QuasiMorphism G) : QuasiMorphism G where
+protected def comp  (f₁ : AlmostHom ℤ) (f₂ : AlmostHom G) : AlmostHom G where
   toFun := f₁ ∘ f₂
   almostAdditive :=
     let ⟨_, h₁⟩ := f₁.almostAdditive
@@ -352,7 +352,7 @@ protected def comp  (f₁ : QuasiMorphism ℤ) (f₂ : QuasiMorphism G) : QuasiM
     -- bound is filled in based on the proof :)
     ⟨_, AlmostAdditive.comp h₁ h₂⟩
 
-end QuasiMorphism
+end AlmostHom
 
 end AlgebraicStructure
 
@@ -362,7 +362,7 @@ def Bounded (f : G → ℤ) (bound : ℕ) := ∀ g : G, |f g| ≤ bound
 
 /- We don't really need this, but we might as well prove it. -/
 variable {f : G → ℤ} {bound : ℕ} in
-lemma almost_additive_of_bounded (h : Bounded f bound)
+lemma Bounded.almost_additive (h : Bounded f bound)
     : AlmostAdditive f (bound * 3) := fun g₁ g₂ =>
   calc |f (g₁ + g₂) - f g₁ - f g₂|
       ≤ |f (g₁ + g₂)| + |(-f g₁)| + |(-f g₂)| := Int.natAbs_add_le₃ ..
@@ -370,8 +370,8 @@ lemma almost_additive_of_bounded (h : Bounded f bound)
                                   h (g₁ + g₂), h g₁, h g₂]
 
 variable (G) in
-/-- The subgroup of `QuasiMorphism G` consisting of bounded quasi-morphisms. -/
-def boundedQuasiMorphisms : AddSubgroup (QuasiMorphism G) where
+/-- The subgroup of `AlmostHom G` consisting of bounded quasi-morphisms. -/
+def boundedAlmostHoms : AddSubgroup (AlmostHom G) where
   carrier := {f | ∃ bound : ℕ, Bounded f bound}
   add_mem' {f₁ f₂} := fun ⟨bound₁, h₁⟩ ⟨bound₂, h₂⟩ => ⟨_, fun g =>
     calc |f₁ g + f₂ g| ≤ |f₁ g| + |f₂ g| := Int.natAbs_add_le ..
@@ -381,7 +381,9 @@ def boundedQuasiMorphisms : AddSubgroup (QuasiMorphism G) where
     calc |(-f g)| = |f g| := Int.natAbs_neg (f g)
                 _ ≤ bound := h g⟩
 
+variable (G) in
+def QuasiHom := AlmostHom G ⧸ boundedAlmostHoms G
 
-def EudoxusReal := QuasiMorphism ℤ ⧸ boundedQuasiMorphisms ℤ
+abbrev EudoxusReal := QuasiHom ℤ
 
 end Quotient
