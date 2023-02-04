@@ -339,15 +339,6 @@ protected def neg : QuasiMorphism G where
   toFun := -f
   almostAdditive := local_wrapper neg 0
 
-/-- Composition with a quasi-morphism on ℤ, returning another quasi-morphism. -/
-protected def comp  (f₁ : QuasiMorphism ℤ) (f₂ : QuasiMorphism G) : QuasiMorphism G where
-  toFun := f₁ ∘ f₂
-  almostAdditive :=
-    let ⟨_, h₁⟩ := f₁.almostAdditive
-    let ⟨_, h₂⟩ := f₂.almostAdditive
-    -- bound is filled in based on the proof :)
-    ⟨_, AlmostAdditive.comp h₁ h₂⟩
-
 instance : AddCommGroup (QuasiMorphism G) where
   add := QuasiMorphism.add
   add_comm := by intros; ext; apply Int.add_comm
@@ -358,6 +349,20 @@ instance : AddCommGroup (QuasiMorphism G) where
   neg := QuasiMorphism.neg
   add_left_neg := by intros; ext; apply Int.add_left_neg
 
+/-- Composition with a quasi-morphism on ℤ, returning another quasi-morphism. -/
+protected def comp  (f₁ : QuasiMorphism ℤ) (f₂ : QuasiMorphism G) : QuasiMorphism G where
+  toFun := f₁ ∘ f₂
+  almostAdditive :=
+    let ⟨_, h₁⟩ := f₁.almostAdditive
+    let ⟨_, h₂⟩ := f₂.almostAdditive
+    -- bound is filled in based on the proof :)
+    ⟨_, AlmostAdditive.comp h₁ h₂⟩
+
+end QuasiMorphism
+
+end AlgebraicStructure
+
+section Quotient
 
 def BoundedQuasiMorphs : AddSubgroup (QuasiMorphism G) where
   carrier := {f | ∃ bound, ∀ g, |f g| ≤ bound}
@@ -379,7 +384,4 @@ def BoundedQuasiMorphs : AddSubgroup (QuasiMorphism G) where
 /- def BoundedQuasiMorphs_is_Normal : (BoundedQuasiMorphs (BoundedQuasiMorphs G)).Normal := -/ 
   /- AddSubgroup.normal_of_comm -/
 
-
-end QuasiMorphism
-
-end AlgebraicStructure
+end Quotient
