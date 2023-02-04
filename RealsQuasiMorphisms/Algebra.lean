@@ -8,9 +8,8 @@ open scoped Int.natAbs
 variable {G : Type _} [AddCommGroup G]
 
 section Comp
-namespace AlmostAdditive
 
-protected theorem comp
+protected theorem AlmostAdditive.comp
     ⦃f₁ : ℤ → ℤ⦄ ⦃bound₁ : ℕ⦄ (h₁ : AlmostAdditive f₁ bound₁)
     ⦃f₂ : G → ℤ⦄ ⦃bound₂ : ℕ⦄ (h₂ : AlmostAdditive f₂ bound₂)
   : AlmostAdditive (f₁ ∘ f₂) <| (bound₁ + |f₁ 1|) * bound₂ + bound₁ * 3 := fun x y =>
@@ -37,7 +36,16 @@ protected theorem comp
         := h₂.almost_additive .. |> Nat.mul_le_mul_left (k := _)
                                  |> Nat.add_le_add_right (k := _)
 
-theorem comp_congr_right
+/-- Composition with a quasi-morphism on ℤ, returning another quasi-morphism. -/
+protected def AlmostHom.comp  (f₁ : AlmostHom ℤ) (f₂ : AlmostHom G) : AlmostHom G where
+  toFun := f₁ ∘ f₂
+  almostAdditive :=
+    let ⟨_, h₁⟩ := f₁.almostAdditive
+    let ⟨_, h₂⟩ := f₂.almostAdditive
+    -- bound is filled in based on the proof :)
+    ⟨_, AlmostAdditive.comp h₁ h₂⟩
+
+theorem AlmostAdditive.comp_congr_right
         ⦃f  : ℤ → ℤ⦄ ⦃bound' : ℕ⦄ (h : AlmostAdditive f  bound')
         ⦃f₁ f₂ : G → ℤ⦄ ⦃bound : ℕ⦄ (h' : Bounded (-f₁ + f₂) bound)
     : Bounded (-f.comp f₁ + f.comp f₂) <|
@@ -56,18 +64,6 @@ theorem comp_congr_right
           := by have : |f₂ g - f₁ g| ≤ bound := Int.sub_eq_neg_add .. ▸ h' g
                 have := Nat.mul_le_mul_left (bound' + (f 1).natAbs) this
                 linarith [this]
-
-end AlmostAdditive
-
-/-- Composition with a quasi-morphism on ℤ, returning another quasi-morphism. -/
-protected def AlmostHom.comp  (f₁ : AlmostHom ℤ) (f₂ : AlmostHom G) : AlmostHom G where
-  toFun := f₁ ∘ f₂
-  almostAdditive :=
-    let ⟨_, h₁⟩ := f₁.almostAdditive
-    let ⟨_, h₂⟩ := f₂.almostAdditive
-    -- bound is filled in based on the proof :)
-    ⟨_, AlmostAdditive.comp h₁ h₂⟩
-
 
 namespace QuasiHom
 
