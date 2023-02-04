@@ -164,7 +164,7 @@ private lemma almost_smul_comm
 
 /- `almost_smul_comm'` specialised to quasi-morphisms on integers and applied to 1.
 Eq (1) of reference 1. -/
-private lemma almost_smul_comm'
+private lemma almost_smul_comm_int
         ⦃f : ℤ → ℤ⦄ ⦃bound : ℕ⦄ (h : AlmostAdditive f bound) (m n : ℤ)
     : |n * f m - m * f n| ≤ bound * (|m| + |n| + 2) := by
   lax_exact h.almost_smul_comm m n 1 <;> rw [zsmul_int_one]
@@ -177,7 +177,12 @@ lemma linear_growth_upper_bound
   _ ≤ (bound + |f g|) * |n| + bound
         := by linarith [h.almost_smul n g, Int.natAbs_mul n (f g)]
 
-private lemma linear_growth_lower_bound
+lemma linear_growth_upper_bound_int
+        ⦃f : ℤ → ℤ⦄ ⦃bound : ℕ⦄ (h : AlmostAdditive f bound) (n : ℤ)
+    : |f n| ≤ (bound + |f 1|) * |n| + bound := by
+  lax_exact h.linear_growth_upper_bound n 1; rw [zsmul_int_one]
+
+lemma linear_growth_lower_bound
   : (|f g| - bound) * |n| - bound ≤ |f (n • g)| := by
   rewrite [tsub_mul, Nat.sub_sub, ←Nat.mul_succ]
   apply Nat.sub_le_of_le_add; rewrite [Nat.add_comm]
@@ -189,6 +194,11 @@ private lemma linear_growth_lower_bound
           := by congr 1; rewrite [←Int.natAbs_neg]
                 congr 1; linarith
     _ ≤ bound * (|n| + 1) + |f (n • g)| := by linarith [h.almost_smul n g]
+
+lemma linear_growth_lower_bound_int
+        ⦃f : ℤ → ℤ⦄ ⦃bound : ℕ⦄ (h : AlmostAdditive f bound) (n : ℤ)
+    : (|f 1| - bound) * |n| - bound ≤ |f n| := by
+  lax_exact h.linear_growth_lower_bound n 1; rw [zsmul_int_one]
 
 end AlmostAdditive
 
@@ -225,20 +235,30 @@ private lemma almost_smul_comm
 local_wrapper almost_smul_comm 2
 
 /- Not useful, since we don't say anything about what the bound is.
-private lemma almost_smul_comm' (f : AlmostHom ℤ) (m n : ℤ)
-  : bdd n * f m - m * f n :=
-local_wrapper almost_smul_comm'
+private lemma almost_smul_comm_int (f : AlmostHom ℤ) (m n : ℤ)
+    : bdd n * f m - m * f n :=
+  local_wrapper almost_smul_comm_int
 -/
 
-private lemma linear_growth_upper_bound
+lemma linear_growth_upper_bound
   : ∃ a b : ℕ, ∀ n : ℤ, |f (n • g)| ≤ a * |n| + b :=
 let ⟨_, h⟩ := f.almostAdditive
 ⟨_, _, h.linear_growth_upper_bound (g := g)⟩
 
-private lemma linear_growth_lower_bound
+lemma linear_growth_upper_bound_int (f : AlmostHom ℤ)
+  : ∃ a b : ℕ, ∀ n : ℤ, |f n| ≤ a * |n| + b :=
+let ⟨_, h⟩ := f.almostAdditive
+⟨_, _, h.linear_growth_upper_bound_int⟩
+
+lemma linear_growth_lower_bound
   : ∃ a b : ℕ, ∀ n : ℤ, a * |n| - b ≤ |f (n • g)| :=
 let ⟨_, h⟩ := f.almostAdditive
 ⟨_, _, h.linear_growth_lower_bound (g := g)⟩
+
+lemma linear_growth_lower_bound_int (f : AlmostHom ℤ)
+  : ∃ a b : ℕ, ∀ n : ℤ, a * |n| - b ≤ |f n| :=
+let ⟨_, h⟩ := f.almostAdditive
+⟨_, _, h.linear_growth_lower_bound_int⟩
 
 end AlmostHom
 
@@ -328,8 +348,8 @@ def QuasiHom := AlmostHom G ⧸ boundedAlmostHoms G
 
 abbrev EudoxusReal := QuasiHom ℤ
 
--- TypeClass inference does not unfold the definition of `QuasiHom`
--- automatically so the instance must be defined manually
+/- Typeclass inference won't unfold the definition of `QuasiHom`
+automatically, so the instance must be defined manually. -/
 instance : AddCommGroup (QuasiHom G) := by unfold QuasiHom; infer_instance
 
 end Quotient
