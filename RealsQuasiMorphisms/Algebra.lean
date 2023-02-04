@@ -8,8 +8,9 @@ open scoped Int.natAbs
 variable {G : Type _} [AddCommGroup G]
 
 section Comp
+namespace AlmostAdditive
 
-protected theorem AlmostAdditive.comp
+protected theorem comp
     ⦃f₁ : ℤ → ℤ⦄ ⦃bound₁ : ℕ⦄ (h₁ : AlmostAdditive f₁ bound₁)
     ⦃f₂ : G → ℤ⦄ ⦃bound₂ : ℕ⦄ (h₂ : AlmostAdditive f₂ bound₂)
   : AlmostAdditive (f₁ ∘ f₂) <| (bound₁ + |f₁ 1|) * bound₂ + bound₁ * 3 := fun x y =>
@@ -36,16 +37,7 @@ protected theorem AlmostAdditive.comp
         := h₂.almost_additive .. |> Nat.mul_le_mul_left (k := _)
                                  |> Nat.add_le_add_right (k := _)
 
-/-- Composition with a quasi-morphism on ℤ, returning another quasi-morphism. -/
-protected def AlmostHom.comp  (f₁ : AlmostHom ℤ) (f₂ : AlmostHom G) : AlmostHom G where
-  toFun := f₁ ∘ f₂
-  almostAdditive :=
-    let ⟨_, h₁⟩ := f₁.almostAdditive
-    let ⟨_, h₂⟩ := f₂.almostAdditive
-    -- bound is filled in based on the proof :)
-    ⟨_, AlmostAdditive.comp h₁ h₂⟩
-
-theorem AlmostAdditive.comp_congr_right
+lemma comp_congr_right
         ⦃f  : ℤ → ℤ⦄ ⦃bound : ℕ⦄ (h : AlmostAdditive f  bound)
         ⦃f₁ f₂ : G → ℤ⦄ ⦃bound' : ℕ⦄ (h' : Bounded (-f₁ + f₂) bound')
     : Bounded (-f.comp f₁ + f.comp f₂) <|
@@ -65,6 +57,89 @@ theorem AlmostAdditive.comp_congr_right
                 have := Nat.mul_le_mul_left (bound + (f 1).natAbs) this
                 linarith [this]
 
+lemma almost_comp_add
+        ⦃f  : ℤ → ℤ⦄ ⦃bound : ℕ⦄ (h : AlmostAdditive f  bound)
+        (f₁ f₂ : G → ℤ)
+    : Bounded (-f ∘ (f₁ + f₂) + (f ∘ f₁ + f ∘ f₂)) bound := fun g => by
+  show |(-f (f₁ g + f₂ g)) + (f (f₁ g) + f (f₂ g))| ≤ bound
+  rewrite [←Int.natAbs_neg]
+  lax_exact h.almost_additive (f₁ g) (f₂ g); linarith
+
+end AlmostAdditive
+
+namespace AlmostHom
+
+/-- Composition with a quasi-morphism on ℤ, returning another quasi-morphism. -/
+protected def comp  (f₁ : AlmostHom ℤ) (f₂ : AlmostHom G) : AlmostHom G where
+  toFun := f₁ ∘ f₂
+  almostAdditive :=
+    let ⟨_, h₁⟩ := f₁.almostAdditive
+    let ⟨_, h₂⟩ := f₂.almostAdditive
+    -- bound is filled in based on the proof :)
+    ⟨_, AlmostAdditive.comp h₁ h₂⟩
+
+/-- Concrete statement of well-defined-ness of `QuasiHom.comp` wrt second argument. -/
+lemma comp_congr_right (f : AlmostHom ℤ)
+        ⦃f₁ f₂ : AlmostHom G⦄ (h : ∃ bound : ℕ, Bounded (-f₁ + f₂) bound)
+    : ∃ bound : ℕ, Bounded (-f.comp f₁ + f.comp f₂) bound :=
+  let ⟨_, h'⟩ := h; let ⟨_, h⟩ := f.almostAdditive
+  ⟨_, h.comp_congr_right h'⟩
+
+/-- Concrete statement of additivity of `QuasiHom.comp` wrt second argument. -/
+lemma almost_comp_add (f : AlmostHom ℤ) (f₁ f₂ : AlmostHom G)
+    : ∃ bound : ℕ, Bounded (-f.comp (f₁ + f₂) + (f.comp f₁ + f.comp f₂)) bound :=
+  let ⟨_, h⟩ := f.almostAdditive
+  ⟨_, h.almost_comp_add f₁ f₂⟩
+
+lemma add_comp (f : AlmostHom G) (f₁ f₂ : AlmostHom ℤ)
+    : (f₁ + f₂).comp f = f₁.comp f + f₂.comp f := by ext; rfl
+
+lemma bounded_comp (f₂ : AlmostHom G)
+                   ⦃f₁ : AlmostHom ℤ⦄ (h : ∃ bound : ℕ, Bounded f₁ bound)
+    : ∃ bound : ℕ, Bounded (f₁.comp f₂) bound :=
+  let ⟨bound, h⟩ := h; ⟨bound, fun g => h (f₂ g)⟩
+
+end AlmostHom
+
+
+def smulHom : QuasiHom ℤ →+ QuasiHom G →+ QuasiHom G := by
+  /- Skeleton. This is glue code tying `Quotient`s and
+  `QuotientAddGroup`s and `MonoidHom`-related functions to define the
+  homomorphism in terms of the actual concrete proofs needed, which
+  are given as holes (except for the function, which is filled in). -/
+  open QuotientAddGroup in
+  refine
+    lift (boundedAlmostHoms ℤ)
+      (AddMonoidHom.mk' (fun f => AddMonoidHom.mk'
+          (Quotient.map (sa := leftRel _) (sb := leftRel _)
+            /- Function definition -/
+            f.comp
+            /- Well-defined wrt second arg -/
+            (fun f₁ f₂ =>
+              show (leftRel _).r .. → (leftRel _).r ..
+                by (repeat rewrite [leftRel_apply]); exact
+              f.comp_congr_right (f₁ := f₁) (f₂ := f₂)))
+          /- Hom wrt second arg as `QuasiHom G` -/
+          (Quotient.ind₂ <| fun g₁ g₂ => Quotient.sound <|
+           show (leftRel _).r (f.comp (g₁ + g₂)) (f.comp g₁ + f.comp g₂)
+             by rewrite [leftRel_apply]; exact
+           f.almost_comp_add g₁ g₂))
+        /- Hom wrt first arg as `AlmostHom ℤ` -/
+        fun f₁ f₂ =>
+          AddMonoidHom.ext <|
+          Quotient.ind <| fun g => congrArg mk <|
+          g.add_comp f₁ f₂)
+      /- Show output is 0 if first arg is in `boundedAlmostHoms ℤ`
+      (i.e, well-defined wrt first arg as `QuasiHom ℤ`) -/
+      fun f h =>
+        AddMonoidHom.ext <|
+        Quotient.ind <| fun g => Quotient.sound <|
+        -- Giving up on even the semblance of structure from here
+        suffices (-f.comp g + (0:AlmostHom G)) ∈ boundedAlmostHoms G
+          from sorry
+        by rewrite [add_zero, neg_mem_iff]; exact g.bounded_comp h
+
+
 namespace QuasiHom
 
 /-! One has to prove both that -/
@@ -83,15 +158,6 @@ def compHom : AlmostHom ℤ →+ AlmostHom G → AlmostHom G where
 lemma compHom_ker_zero : 
     ∀ f, f ∈ boundedAlmostHoms ℤ → @compHom G _ f = 0 := 
   sorry
-
-
-
-#check QuotientAddGroup.lift (boundedAlmostHoms ℤ) compHom compHom_ker_zero 
-  
-
--- QuotientGroup.lift; Setoid Quotient
-#print QuasiHom
-#print QuotientGroup.lift
 
 end QuasiHom
 
