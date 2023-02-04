@@ -30,9 +30,7 @@ protected theorem comp
                 rw [show f₂ (x + y) = (f₂ (x + y) - f₂ x - f₂ y) + (f₂ x + f₂ y)
                     by linarith]
               refine Nat.add_le_add₃ ?_ ?using_lemma ?_;
-              case using_lemma =>
-                lax_exact h₁.linear_growth_upper_bound (f₂ (x + y) - f₂ x - f₂ y) 1
-                rw [zsmul_int_one]
+              case using_lemma => apply h₁.linear_growth_upper_bound_int
               all_goals apply h₁.almost_additive
   _ = (bound₁ + |f₁ 1|) * |f₂ (x + y) - f₂ x - f₂ y| + bound₁ * 3 := by linarith
   _ ≤ (bound₁ + |f₁ 1|) * bound₂ + bound₁ * 3
