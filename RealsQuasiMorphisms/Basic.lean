@@ -289,7 +289,7 @@ calc |(-f (x + y)) - (-f x) - (-f y)|
 
 protected theorem comp
     ⦃f₁ : ℤ → ℤ⦄ ⦃bound₁ : ℕ⦄ (h₁ : AlmostAdditive f₁ bound₁)
-    ⦃f₂ : ℤ → ℤ⦄ ⦃bound₂ : ℕ⦄ (h₂ : AlmostAdditive f₂ bound₂)
+    ⦃f₂ : G → ℤ⦄ ⦃bound₂ : ℕ⦄ (h₂ : AlmostAdditive f₂ bound₂)
   : AlmostAdditive (f₁ ∘ f₂) <| (bound₁ + |f₁ 1|) * bound₂ + bound₁ * 3 :=
 fun x y => calc
   |f₁ (f₂ (x + y)) - f₁ (f₂ x) - f₁ (f₂ y)|
@@ -339,8 +339,8 @@ protected def neg : QuasiMorphism G where
   toFun := -f
   almostAdditive := local_wrapper neg 0
 
-/-- Composition of quasi-morphisms on ℤ, returning another quasi-morphism. -/
-protected def comp  (f₁ f₂ : QuasiMorphism ℤ) : QuasiMorphism ℤ where
+/-- Composition with a quasi-morphism on ℤ, returning another quasi-morphism. -/
+protected def comp  (f₁ : QuasiMorphism ℤ) (f₂ : QuasiMorphism G) : QuasiMorphism G where
   toFun := f₁ ∘ f₂
   almostAdditive :=
     let ⟨_, h₁⟩ := f₁.almostAdditive
