@@ -381,37 +381,6 @@ def boundedQuasiMorphisms : AddSubgroup (QuasiMorphism G) where
     calc |(-f g)| = |f g| := Int.natAbs_neg (f g)
                 _ ≤ bound := h g⟩
 
-/-
-def boundedQuasiMorphisms : AddSubgroup (QuasiMorphism G) where
-  carrier := {f | ∃ bound : ℕ, Bounded f bound}
-  add_mem' {f₁ f₂} := fun ⟨bound₁, h₁⟩ ⟨bound₂, h₂⟩ => ⟨bound₁ + bound₂, by
-    intro; show |f₁ _ + f₂ _| ≤ bound₁ + bound₂
-    linarith [Int.natAbs_add_le .., h₁ _, h₂ _]⟩
-  zero_mem' := ⟨0, by
-    intro; show |(0:ℤ)| ≤ 0
-    trivial⟩
-  neg_mem' {f} := fun ⟨bound, h⟩ => ⟨bound, by
-    intro; show |(-f _)| ≤ bound
-    linarith [Int.natAbs_neg .., h _]⟩
--/
-
-/-
-def boundedQuasiMorphisms : AddSubgroup (QuasiMorphism G) where
-  carrier := {f | ∃ bound, ∀ g, |f g| ≤ bound}
-
-  add_mem' := fun {f₁} {f₂} ⟨bound₁, h₁⟩  ⟨bound₂, h₂⟩ => 
-    ⟨bound₁ + bound₂, fun g => by
-      have hf : (f₁ + f₂) g = f₁ g + f₂ g := rfl
-      rewrite [hf]; linarith [Int.natAbs_add_le .., h₁ g, h₂ g]⟩
-
-  zero_mem' := ⟨0, fun _ => Nat.le_refl ..⟩
-
-  neg_mem' := fun {f} h => 
-    let ⟨bound, h⟩ := h
-    ⟨bound, fun g => by
-      have hf : (-f) g = -f g := rfl
-      simp [hf, h]⟩
--/
 
 def EudoxusReal := QuasiMorphism ℤ ⧸ boundedQuasiMorphisms ℤ
 
