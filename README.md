@@ -19,20 +19,20 @@ and finally prove completeness.
 
 ## Plan 
 
-  - [o] Construct a Complete Ordered Field using QuasiMorphisms
+  + [ ] Construct a Complete Ordered Field using QuasiMorphisms
       - [X] Define Quasi-Morphisms
-	  * [X] AlmostHoms
-	  * [X] BoundedHoms
-	  * [X] AlmostHoms additive group
-	  * [X] Quotient AlmostHoms / BoundedHoms
-      - [o] Show QMs form a Field 
-	  * [X] Composition on AlmostHoms
-	  * [X] "Lift" it to Quotient
-	  * [ ] Construct inverses
-	  * [ ] Misc Properties (Some of these follow from comp on Quasi-Morphisms)
+          * [X] AlmostHoms
+          * [X] BoundedHoms
+          * [X] AlmostHoms additive group
+          * [X] Quotient AlmostHoms / BoundedHoms
+      - [ ] Show QMs form a Field 
+          * [X] Composition on AlmostHoms
+          * [X] "Lift" it to Quotient
+          * [ ] Construct inverses
+          * [ ] Misc Properties (Some of these follow from comp on Quasi-Morphisms)
       - [ ] Ordered Field
-	  * [ ] Define a suitalbe total order on QuasiMorphisms
-	  * [ ] Prove that this forms an Ordered Field
+          * [ ] Define a suitalbe total order on QuasiMorphisms
+          * [ ] Prove that this forms an Ordered Field
       - [ ] Prove Completeness
     
 ## References & Clarifications
