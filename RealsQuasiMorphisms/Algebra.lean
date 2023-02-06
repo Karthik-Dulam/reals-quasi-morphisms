@@ -143,23 +143,19 @@ def smulHom : QuasiHom ℤ →+ QuasiHom G →+ QuasiHom G := by
 
 namespace QuasiHom
 
-instance : AddCommGroup (QuasiHom ℤ) := inferInstance
-instance : AddCommSemigroup (QuasiHom ℤ) := inferInstance
-
-/- set_option pp.explicit true in -/
 instance : Field (QuasiHom ℤ) where
   sub_eq_add_neg := SubNegMonoid.sub_eq_add_neg
   mul := fun f g => smulHom f g
   left_distrib a b c := by apply AddMonoidHom.map_add 
-  right_distrib a b c := sorry -- times out AddMonoidHom.add_apply (smulHom a) (smulHom b) c  -- always times out -- AddMonoidHom.add_apply (smulHom a) (smulHom b) c
+  right_distrib a b c := sorry -- always times out AddMonoidHom.add_apply (smulHom a) (smulHom b) c
   mul_comm a b := by sorry -- apply AddMonoidHom.mul_comm
-  zero_mul a := by apply AddMonoidHom.zero_comp
+  zero_mul a := by sorry -- apply AddMonoidHom.zero_comp
   mul_zero a := sorry
   mul_assoc := sorry
   one :=  ⟦ ⟨ fun n => n, ⟨0, by intros _ _ ; simp only 
                           [add_sub_cancel', sub_self, 
                           Int.natAbs_zero, le_refl]⟩⟩  ⟧ 
-  one_mul a := by simp [smulHom]; 
+  one_mul a := by simp [smulHom]; sorry
   mul_one := sorry
   add_left_neg := sorry
   inv := sorry
