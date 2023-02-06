@@ -1,4 +1,6 @@
 import Mathlib.Algebra.Field.Basic
+import Mathlib.Algebra.Hom.Group
+/- import Mathlib.Algebra.Group.Defs -/
 
 import Util.Arithmetic
 import RealsQuasiMorphisms.Basic
@@ -102,6 +104,7 @@ lemma bounded_comp (f₂ : AlmostHom G)
 end AlmostHom
 
 
+-- Tidy up the proof and add it to suitable namespace
 def smulHom : QuasiHom ℤ →+ QuasiHom G →+ QuasiHom G := by
   /- Skeleton. This is glue code tying `Quotient`s and
   `QuotientAddGroup`s and `MonoidHom`-related functions to define the
@@ -133,31 +136,37 @@ def smulHom : QuasiHom ℤ →+ QuasiHom G →+ QuasiHom G := by
       (i.e, well-defined wrt first arg as `QuasiHom ℤ`) -/
       fun f h =>
         AddMonoidHom.ext <|
-        Quotient.ind <| fun g => Quotient.sound <|
-        -- Giving up on even the semblance of structure from here
-        suffices (-f.comp g + (0:AlmostHom G)) ∈ boundedAlmostHoms G
-          from sorry
-        by rewrite [add_zero, neg_mem_iff]; exact g.bounded_comp h
-
+        Quotient.ind <| fun g => Quotient.sound <| by
+          simp only [HasEquiv.Equiv, leftRel_apply]; 
+          show -f.comp g + 0 ∈ boundedAlmostHoms G
+          rewrite [add_zero, neg_mem_iff]; exact g.bounded_comp h
 
 namespace QuasiHom
 
-/-! One has to prove both that -/
+instance : AddCommGroup (QuasiHom ℤ) := inferInstance
+instance : AddCommSemigroup (QuasiHom ℤ) := inferInstance
 
-/- protected def smul : QuasiHom ℤ → AlmostHom G → AlmostHom G := by -/ 
-/-   intro f g -/
-/-   refine QuotientGroup.lift {QuasiHom ℤ} -/
+/- set_option pp.explicit true in -/
+instance : Field (QuasiHom ℤ) where
+  sub_eq_add_neg := SubNegMonoid.sub_eq_add_neg
+  mul := fun f g => smulHom f g
+  left_distrib a b c := by apply AddMonoidHom.map_add 
+  right_distrib a b c := sorry -- times out AddMonoidHom.add_apply (smulHom a) (smulHom b) c  -- always times out -- AddMonoidHom.add_apply (smulHom a) (smulHom b) c
+  mul_comm a b := by sorry -- apply AddMonoidHom.mul_comm
+  zero_mul a := by apply AddMonoidHom.zero_comp
+  mul_zero a := sorry
+  mul_assoc := sorry
+  one :=  ⟦ ⟨ fun n => n, ⟨0, by intros _ _ ; simp only 
+                          [add_sub_cancel', sub_self, 
+                          Int.natAbs_zero, le_refl]⟩⟩  ⟧ 
+  one_mul a := by simp [smulHom]; 
+  mul_one := sorry
+  add_left_neg := sorry
+  inv := sorry
+  exists_pair_ne := sorry
+  mul_inv_cancel := sorry
+  inv_zero := sorry
 
-
-
-def compHom : AlmostHom ℤ →+ AlmostHom G → AlmostHom G where
-  toFun := AlmostHom.comp 
-  map_add' := sorry
-  map_zero' := sorry
-  
-lemma compHom_ker_zero : 
-    ∀ f, f ∈ boundedAlmostHoms ℤ → @compHom G _ f = 0 := 
-  sorry
 
 end QuasiHom
 
