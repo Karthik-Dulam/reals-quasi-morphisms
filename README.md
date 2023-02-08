@@ -1,43 +1,49 @@
 # Reals using Quasi-Morphisms [WIP]
-
 [![ci](https://github.com/Karthik-Dulam/reals-quasi-morphisms/actions/workflows/build.yaml/badge.svg?event=push)](https://github.com/Karthik-Dulam/reals-quasi-morphisms/actions/workflows/build.yaml)
 
-Reals defined using Quasi-Morphisms formalized in Lean
+Reals defined using quasi-morphisms formalized in Lean
 
-## Introduction 
+## Introduction
+This project is an attempt to formalize the construction of the reals using quasi-morphisms
+from `ℤ` to itself. We first construct the type `AlmostHom ℤ` consisting of functions from
+`ℤ` to itself which respect addition up to a constant error bound and show that this is a
+commutative group under addition. Next we define the subgroup consisting of bounded functions
+and form the quotient group, which we call `QuasiHom ℤ`. Finally, we define multiplication on
+`QuasiHom ℤ` by function composition and an ordering and show that it is a complete ordered
+field [WIP].
 
-This project is an attempt to formalize the construction of the reals using 
-QuasiMorphisms from `ℤ` to itself. We first Construct the type of AlmostHomomorphisms,
-then show that this has a commutative group structure, identify the subgroup formed by
-bounded AlmostHomomorphisms and then quotient by this subgroup to get the type of Reals.
+## Plan
+Here, `G` is an additive commutative group.
 
-We then define a product on QuasiMorphisms by showing that the composition respects the 
-equivalence relation. Using this product we show that this forms a field [WIP].
-We need to find a suitable order on this type and show that this forms an ordered field, 
-and finally prove completeness.
++ [ ] Construct `QuasiHom G` and show that `QuasiHom ℤ` is a complete ordered field
+  - [X] Define `QuasiHom G`
+    * [X] Define `AlmostHom G`
+    * [X] Construct instance of `AddCommGroup (AlmostHom G)` using pointwise addition
+    * [X] Define the subgroup of bounded functions
+    * [X] Define `QuasiHom G` as the quotient of `AlmostHom G` by the subgroup
+  - [ ] Field structure of `QuasiHom ℤ` using composition as multiplication
+    * [X] Define multiplication of type `QuasiHom ℤ →+ QuasiHom G →+ QuasiHom G` by lifting composition
+    * [ ] Construct inverse of a non-zero `QuasiHom` (and prove that it is inverse)
+    * [ ] Construct instance of `Field (QuasiHom ℤ)`
+  - [ ] Order structure of `QuasiHom ℤ`
+    * [ ] Define a predicate `NonNeg` on `QuasiHom ℤ`
+    * [ ] Construct instance of `LinearOrderedAddCommGroup (QuasiHom ℤ)` using the predicate, via `TotalPositiveCone`
+  - [ ] Construct instance of `ConditionallyCompleteLinearOrder (QuasiHom ℤ)`
+  - [ ] Construct instance of `LinearOrderedField (QuasiHom ℤ)`
++ [ ] (optional) Show that `QuasiHom G` is a `QuasiHom ℤ`-vector space
+  - [ ] Construct instance of `Module (QuasiHom ℤ) (QuasiHom G)`
 
+    This should follow straightforwardly from `QuasiHom ℤ →+ QuasiHom G →+ QuasiHom G`.
++ [ ] (optional) Relate `QuasiHom ℤ` to other algebraic structures
+  - [ ] Embed `ℚ` (as an ordered field) in `QuasiHom ℤ`
+  - [ ] Define unique isomorphism from `QuasiHom ℤ` to any other complete ordered field
++ [ ] (optional) Show `QuasiHom ℤ` is Cauchy-complete (perhaps as a uniform space?)
++ [ ] (optional) Generalise codomain from `ℤ` (perhaps to a `LinearOrderedRing`?)
 
-## Plan 
-
-  + [ ] Construct a Complete Ordered Field using QuasiMorphisms
-      - [X] Define Quasi-Morphisms
-          * [X] AlmostHoms
-          * [X] BoundedHoms
-          * [X] AlmostHoms additive group
-          * [X] Quotient AlmostHoms / BoundedHoms
-      - [ ] Show QMs form a Field 
-          * [X] Composition on AlmostHoms
-          * [X] "Lift" it to Quotient
-          * [ ] Construct inverses
-          * [ ] Misc Properties (Some of these follow from comp on Quasi-Morphisms)
-      - [ ] Ordered Field
-          * [ ] Define a suitalbe total order on QuasiMorphisms
-          * [ ] Prove that this forms an Ordered Field
-      - [ ] Prove Completeness
-    
 ## References & Clarifications
++ Primarily [this exposition](http://web.science.mq.edu.au/~street/EffR.pdf) by James Douglas et al
 
-We have followed [this exposition](http://web.science.mq.edu.au/~street/EffR.pdf) by James Douglas et al, but 
-the naming convention is slightly different: We call the functions : `ℤ → ℤ` which 
-are almost homomorphisms, `AlmostHoms` and the bounded functions among them, `BoundedHoms`.
-We call the quotient of `AlmostHoms` by `BoundedHoms` as `QuasiMorphisms`.
+  Remark: our naming convention is slightly different from this: we call the functions
+  `ℤ → ℤ` which are almost additive almost-homomorphisms (`AlmostHom`) and the elements of
+  the quotient of `AlmostHom` by the bounded functions quasi-morphisms (`QuasiHom`), whereas
+  the paper calls the functions themselves quasi-morphisms.
