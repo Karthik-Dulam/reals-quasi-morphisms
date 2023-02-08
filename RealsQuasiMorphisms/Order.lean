@@ -12,19 +12,27 @@ def is_neg (f : AlmostHom G) : Prop := ∃ b : ℤ , ∀ x : G, x ≥ 0 → f x 
 
 def le (f g : AlmostHom G) : Prop := is_pos (g - f)
 
+-- why exactly this is needed is well beyond me
+private theorem add_reduces_to_fun (f g : AlmostHom G) : toFun (f + g) = toFun f + toFun g := by rfl
+private theorem neg_reduces_to_fun (f : AlmostHom G) : toFun (-f) = - toFun f:= by rfl
+private theorem sub_reduces_to_fun (f g : AlmostHom G) : toFun (f - g) = toFun f - toFun g := by rfl
+
 instance : Preorder (AlmostHom G) where
   le := le
   le_refl f := by
                 simp only [le, is_pos, sub_self]
-                use -1; intro x hx
+                use -1; intro x _
                 show -1 ≤ 0; simp only [Left.neg_nonpos_iff]
   le_trans p q r:= by
                     intro hpq hqr
                     simp only [le, is_pos] at hpq hqr ⊢
                     let ⟨a, hpq⟩ := hpq; let ⟨b, hqr⟩ := hqr
                     use a+b; intro x hx
-                    sorry
-  
+                    simp [sub_reduces_to_fun] at hpq hqr ⊢ 
+                    let h := add_le_add (hpq x hx) (hqr x hx)
+                    simp only [sub_add_sub_cancel'] at h
+                    apply h
+
 
 -- instance : OrderedAddCommGroup (AlmostHom G) where
 --   add_le_add_left := sorry
