@@ -1,6 +1,6 @@
 import Mathlib.Algebra.Field.Basic
 import Mathlib.Algebra.Hom.Group
-/- import Mathlib.Algebra.Group.Defs -/
+import Aesop
 
 import Util.Arithmetic
 import RealsQuasiMorphisms.Basic
@@ -105,7 +105,7 @@ end AlmostHom
 
 
 -- Tidy up the proof and add it to suitable namespace
-def smulHom : QuasiHom ℤ →+ QuasiHom G →+ QuasiHom G := by
+@[aesop norm unfold] def smulHom : QuasiHom ℤ →+ QuasiHom G →+ QuasiHom G := by
   /- Skeleton. This is glue code tying `Quotient`s and
   `QuotientAddGroup`s and `MonoidHom`-related functions to define the
   homomorphism in terms of the actual concrete proofs needed, which
@@ -137,31 +137,85 @@ def smulHom : QuasiHom ℤ →+ QuasiHom G →+ QuasiHom G := by
       fun f h =>
         AddMonoidHom.ext <|
         Quotient.ind <| fun g => Quotient.sound <| by
-          simp only [HasEquiv.Equiv, leftRel_apply]; 
+          simp only [HasEquiv.Equiv, leftRel_apply];
           show -f.comp g + 0 ∈ boundedAlmostHoms G
           rewrite [add_zero, neg_mem_iff]; exact g.bounded_comp h
 
 namespace QuasiHom
 
-instance : Field (QuasiHom ℤ) where
-  sub_eq_add_neg := SubNegMonoid.sub_eq_add_neg
-  mul := fun f g => smulHom f g
-  left_distrib a b c := by apply AddMonoidHom.map_add 
-  right_distrib a b c := sorry -- always times out AddMonoidHom.add_apply (smulHom a) (smulHom b) c
-  mul_comm a b := by sorry -- apply AddMonoidHom.mul_comm
-  zero_mul a := by sorry -- apply AddMonoidHom.zero_comp
-  mul_zero a := sorry
-  mul_assoc := sorry
-  one :=  ⟦ ⟨ fun n => n, ⟨0, by intros _ _ ; simp only 
-                          [add_sub_cancel', sub_self, 
-                          Int.natAbs_zero, le_refl]⟩⟩  ⟧ 
-  one_mul a := by simp [smulHom]; sorry
-  mul_one := sorry
-  add_left_neg := sorry
-  inv := sorry
-  exists_pair_ne := sorry
-  mul_inv_cancel := sorry
-  inv_zero := sorry
+
+private lemma right_distrib (a b c : QuasiHom ℤ) :
+    smulHom (a + b) c = smulHom a c + smulHom b c := by
+  rw [AddMonoidHom.map_add]; apply AddMonoidHom.add_apply
+
+private lemma zero_mul (a : QuasiHom ℤ) : smulHom 0 a = 0 := by
+  simp only [map_zero, AddMonoidHom.zero_apply]
+
+private lemma mul_zero (a : QuasiHom ℤ) : @smulHom ℤ _ a 0 = 0 := by
+  simp only [map_zero]
+
+private lemma mul_assoc (a b c : QuasiHom ℤ) :
+    smulHom (smulHom a b) c = smulHom a (smulHom b c) := by
+  apply QuotientAddGroup.induction_on a
+  apply QuotientAddGroup.induction_on b
+  apply QuotientAddGroup.induction_on c
+  intro _ _ _; rfl
+
+
+
+-- #check fun (H : AddSubgroup (AlmostHom G)) (a : AlmostHom G) =>
+--   show ((↑a) : AlmostHom G ⧸ H) = ⟦a⟧ from QuotientAddGroup.coe_mk'
+
+/- private def one : QuasiHom ℤ := CoeTC.coe ({ -/
+/-   toFun := id -/
+/-   almostAdditive := ⟨0, by -/
+/-     intros _ _ -/
+/-     simp only  [Function.id_def, add_sub_cancel', sub_self, -/
+/-                 Int.natAbs_zero, le_refl 0]⟩ -/
+/- : AlmostHom ℤ}) -/
+
+private def one : QuasiHom ℤ := ⟦ ⟨ fun n => n, ⟨0, by intros _ _ ; simp only
+                      [add_sub_cancel', sub_self,
+                      Int.natAbs_zero, le_refl]⟩⟩  ⟧
+
+private def one_mul  (a : QuasiHom ℤ) : smulHom one a = a := by
+  apply QuotientAddGroup.induction_on a; intro _; rfl
+
+private def mul_one (a : QuasiHom ℤ) : smulHom a one = a := by
+  apply QuotientAddGroup.induction_on a; intro _; rfl
+
+private def inv (a : QuasiHom ℤ) : QuasiHom ℤ := by
+  sorry
+
+/- private def exists_pair_ne : one ≠ 0 := by -/
+/-   rewrite [show ∀ a : QuasiHom ℤ, a ≠ 0 ↔ ¬a = 0 by intro; rfl] -/
+/-   unfold one -/
+/-   rewrite [QuotientAddGroup.eq_zero_iff] -/
+
+
+/- #exit -/
+-- For some reason LSP is quite slow if it is allowed to work on this instance declaration.
+instance : Field (QuasiHom ℤ) :=
+  let mul : Mul (QuasiHom ℤ) := ⟨ fun f g => smulHom f g ⟩
+  {
+    sub_eq_add_neg := SubNegMonoid.sub_eq_add_neg
+    left_distrib := by intros _ _ _;  apply AddMonoidHom.map_add
+    right_distrib := right_distrib
+      -- aesop? (add norm unfold [HMul.hMul, Mul.mul], norm simp AddMonoidHom.map_add, safe apply AddMonoidHom.add_apply)
+    mul_comm := sorry
+    zero_mul  := zero_mul
+    mul_zero  := mul_zero
+    mul_assoc := mul_assoc
+    one :=  one
+    one_mul := one_mul
+    mul_one := mul_one
+    add_left_neg := add_left_neg
+    inv := sorry
+    exists_pair_ne := sorry
+    mul_inv_cancel := sorry
+    inv_zero := sorry
+  }
+
 
 
 end QuasiHom
