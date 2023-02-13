@@ -32,7 +32,7 @@ instance : Preorder (AlmostHom G) where
                     apply h
 
 
-theorem minus_neg_pos {f : AlmostHom G} (h : is_neg f) : is_pos (-f) := by
+theorem neg_minus_pos {f : AlmostHom G} (h : is_neg f) : is_pos (-f) := by
   simp only [is_neg, is_pos, neg_reduces_to_fun] at h ⊢
   let ⟨a, ha⟩ := h
   use -a; intro x hx
@@ -40,13 +40,30 @@ theorem minus_neg_pos {f : AlmostHom G} (h : is_neg f) : is_pos (-f) := by
   simp only [neg_le_neg_iff]
   apply ha x hx
 
-theorem minus_pos_neg {f : AlmostHom G} (h : is_pos f) : is_neg (-f) := by
+theorem pos_minus_neg {f : AlmostHom G} (h : is_pos f) : is_neg (-f) := by
   simp only [is_neg, is_pos, neg_reduces_to_fun] at h ⊢
   let ⟨a, ha⟩ := h
   use -a; intro x hx
   show - f.toFun x ≤ -a
   simp only [neg_le_neg_iff]
   apply ha x hx
+
+theorem minus_neg_pos {f : AlmostHom G} (h : is_neg (-f)) : is_pos f := by
+  simp only [is_neg, is_pos, neg_reduces_to_fun] at h ⊢
+  let ⟨a, ha⟩ := h
+  use -a; intro x hx
+  show f.toFun x ≥ -a
+  simp only [ge_iff_le]
+  calc -a ≤ - - (toFun f x) :=
+      by simp only [neg_le_neg_iff]; apply ha x hx
+      _ = toFun f x := by simp only [neg_neg]
+
+theorem minus_pos_neg {f : AlmostHom G} (h : is_pos (-f)) : is_neg f := by
+  simp only [is_neg, is_pos, neg_reduces_to_fun] at h ⊢
+  let ⟨a, ha⟩ := h
+  use -a; intro x hx
+  calc toFun f x = - - (toFun f x)  := by simp only [neg_neg]
+      _ ≤ -a := by simp only [neg_le_neg_iff]; apply ha x hx
 
 -- the meat lies here, the rest is nonsense because lean can't figure out anything
 -- this depends on the bound though
@@ -60,7 +77,7 @@ theorem le_total (f g : AlmostHom G) : f ≤ g ∨ g ≤ f := by
   · apply Or.inl
   · intro h
     apply Or.inr
-    let h := minus_neg_pos h
+    let h := neg_minus_pos h
     simp at h
     apply h
 
@@ -77,7 +94,7 @@ theorem sub_bounded_iff_le_and_ge (f g : AlmostHom G) : f - g ∈ boundedAlmostH
     show is_pos (g - f) ∧ is_pos (f - g)
     simp only [bounded_iff_pos_and_neg] at h
     let ⟨h₁, h₂⟩ := h
-    let h₂ := minus_neg_pos h₂
+    let h₂ := neg_minus_pos h₂
     simp at h₂
     simp [h₁, h₂]
   · intro h
@@ -85,7 +102,9 @@ theorem sub_bounded_iff_le_and_ge (f g : AlmostHom G) : f - g ∈ boundedAlmostH
     let ⟨h₁, h₂⟩ := h
     apply And.intro
     · apply h₂ 
-    · sorry -- I give up, lean can't figure out something a 1 year old probably could
+    · apply minus_pos_neg
+      simp
+      apply h₁
 
 -- the fact that this is even needed anywhere is proof that lean is useless
 theorem le_iff_le (f g : AlmostHom G) : f ≤ g ↔ AlmostHom.le f g := by
@@ -103,53 +122,8 @@ namespace QuasiHom
 
 variable {G : Type} [OrderedAddCommGroup G]
 
-
-
-def le (f g : QuasiHom G) : Prop :=
-  Quotient.liftOn₂' f g (· ≤ ·) (λ (f₁ f₂ g₁ g₂) h₁ h₂ =>
-    have a : f₁ ≤ f₂ → g₁ ≤ g₂ := by
-      have h₁ : (g₁ - f₁) ∈ boundedAlmostHoms G := by
-        sorry
-      have h₂ : (g₂ - f₂) ∈ boundedAlmostHoms G := by
-        sorry
-      -- the proof is actually very easy
-      -- but in lean even the most basic things are impossible
-      intro h
-      have h : AlmostHom.le f₁ f₂ := h
-      -- have h: AlmostHom.le f₁ f₂ := by simp [h] -- yea even this doesnt work, as expected
-      -- have h : AlmostHom.is_pos (f₂ - f₁) := by
-      --   -- all it needs to do is rewrite the ≤ to ITS DEFINITION
-      --   -- BUT FOR SOME REASON THAT JUST WONT WORK
-      --   -- so if anyone can make lean do anything useful for once, do it
-      --   rw [AlmostHom.le] at h -- why does this not work??????
-      --   sorry
-      -- have h : AlmostHom.is_pos (f₂ - f₁) := by
-      --   simp [AlmostHom.le_iff_le] at h
-      --   apply h
-      -- simp [AlmostHom.le_iff_le, AlmostHom.le]
-      simp only [AlmostHom.sub_bounded_iff_le_and_ge] at h₁ h₂
-      let ⟨h₁₁, h₁₂⟩ := h₁
-      let ⟨h₂₁, h₂₂⟩ := h₂
-      calc g₁ ≤ f₁ := h₁₁
-        _ ≤ f₂ := h
-        _ ≤ g₂ := h₂₂
-    have b : g₁ ≤ g₂ → f₁ ≤ f₂ := by
-      have h₁ : (g₁ - f₁) ∈ boundedAlmostHoms G := by
-        sorry
-      have h₂ : (g₂ - f₂) ∈ boundedAlmostHoms G := by
-        sorry
-      intro h
-      simp only [AlmostHom.sub_bounded_iff_le_and_ge] at h₁ h₂
-      let ⟨h₁₁, h₁₂⟩ := h₁
-      let ⟨h₂₁, h₂₂⟩ := h₂
-      calc f₁ ≤ g₁ := h₁₂
-        _ ≤ g₂ := h
-        _ ≤ f₂ := h₂₁
-    propext ⟨a,b⟩
-  )
-
 instance : LinearOrder (QuasiHom G) where
-  le := le
+  le := sorry
   le_refl := sorry
   le_trans := sorry
   le_antisymm := sorry
