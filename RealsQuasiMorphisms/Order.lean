@@ -38,11 +38,42 @@ namespace QuasiHom
 
 variable {G : Type} [OrderedAddCommGroup G]
 
-#check (QuotientAddGroup.con (boundedAlmostHoms G)).r
+theorem bounded_plus_nonneg_nonneg (f : boundedAlmostHoms G) (g : AlmostHom G) : g.nonneg → (f + g).nonneg := by sorry
 
-theorem nonneg_respects_equiv' (f g: AlmostHom G): (QuotientAddGroup.con (boundedAlmostHoms G)).r f g → f.nonneg → g.nonneg := by sorry
+-- ten thousand lines of nonsense
+-- because lean
+theorem nonneg_respects_equiv' (f g: AlmostHom G): (QuotientAddGroup.con (boundedAlmostHoms G)) f g → f.nonneg → g.nonneg := by
+  intro h hf
+  let a := AddAction.orbitRel (AddSubgroup.opposite (boundedAlmostHoms G)) (AlmostHom G)
+  let b := a.r
+  let H (x : AlmostHom G) := AddAction.orbit (AddSubgroup.opposite (boundedAlmostHoms G)) x
+  let c (x y : AlmostHom G) := x ∈ H y
+  have h' : b = c := by rfl
+  have h : b f g := by apply h
+  have h : c f g := by apply h
+  have h : f ∈ H g := by apply h
+  have h : f ∈ AddAction.orbit (AddSubgroup.opposite (boundedAlmostHoms G)) g := by apply h
+  have h : f ∈ Set.range fun (x : boundedAlmostHoms G) => x + g := by
+    sorry
+  have h : ∃ (x : boundedAlmostHoms G), x + g = f := by
+    simp only [Set.mem_range] at h
+    exact h
+  have h : ∃ (x : boundedAlmostHoms G), (-x) + x + g = (-x) + f := by
+    let ⟨x, hx⟩ := h
+    use x
+    sorry -- pathetic
+  have h : ∃ (x : boundedAlmostHoms G), g = x + f := by
+    let ⟨x, hx⟩ := h
+    use -x
+    simp at hx
+    exact hx
+  -- there should be a way to do the above with very little code, but I don't know how
+  let ⟨x, hx⟩ := h
+  let h' := bounded_plus_nonneg_nonneg x f hf
+  simp [hx]
+  exact h'
 
-theorem nonneg_respects_equiv (f g: AlmostHom G): (QuotientAddGroup.con (boundedAlmostHoms G)).r f g → f.nonneg = g.nonneg := by
+theorem nonneg_respects_equiv (f g: AlmostHom G): (QuotientAddGroup.con (boundedAlmostHoms G)) f g → f.nonneg = g.nonneg := by
   intro h
   apply propext
   apply Iff.intro
