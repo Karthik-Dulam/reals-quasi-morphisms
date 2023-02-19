@@ -33,6 +33,7 @@ instance : Preorder (AlmostHom G) where
                     simp only [sub_add_sub_cancel'] at h
                     apply h
 
+
 private lemma bounded_plus_nonneg_nonneg' (f : AlmostHom G) ⦃g : AlmostHom G⦄ (h : ∃ bound : ℕ, Bounded g bound) : f.nonneg → (f + g).nonneg := by
   intro hf
   let ⟨bound, hb⟩ := h
@@ -55,6 +56,29 @@ private lemma bounded_plus_nonneg_nonneg' (f : AlmostHom G) ⦃g : AlmostHom G�
 
 protected theorem bounded_plus_nonneg_nonneg (f : AlmostHom G) (g : boundedAlmostHoms G) : f.nonneg → (f + g).nonneg := by
   exact AlmostHom.bounded_plus_nonneg_nonneg' f g.property
+
+protected lemma zero_nonneg : (0 : AlmostHom G).nonneg := by
+  simp only [AlmostHom.nonneg]
+  use -1
+  intro x _
+  show -1 ≤ 0
+  simp only [Left.neg_nonpos_iff]
+
+protected lemma add_nonneg {f g : AlmostHom G} : f.nonneg → g.nonneg → (f + g).nonneg := by
+  intro hf hg
+  simp only [AlmostHom.nonneg] at hf hg
+  let ⟨a, ha⟩ := hf; let ⟨b, hb⟩ := hg
+  simp only [AlmostHom.nonneg]
+  use a + b
+  intro x hx
+  simp only [AlmostHom.add_reduces_to_fun]
+  show (f.toFun x) + (g.toFun x) ≥ a + b
+  simp only [ge_iff_le] at ha hb ⊢
+  apply add_le_add (ha x hx) (hb x hx)
+
+protected lemma nonneg_total : ∀ {f : AlmostHom G}, f.nonneg ∨ (-f).nonneg := by
+  intro f
+  sorry
 
 end AlmostHom
 
@@ -102,8 +126,22 @@ protected theorem nonneg_respects_equiv (f g: AlmostHom G): (QuotientAddGroup.co
 
 def nonneg (f : QuasiHom G) : Prop := Quotient.liftOn f AlmostHom.nonneg QuasiHom.nonneg_respects_equiv
 
-private lemma zero_nonneg : nonneg (0 : QuasiHom G) := sorry
-private lemma add_nonneg {f g : QuasiHom G} : nonneg f → nonneg g → nonneg (f + g) := sorry
+private lemma zero_nonneg : nonneg (0 : QuasiHom G) := by
+  simp only [nonneg]
+  apply AlmostHom.zero_nonneg
+
+private lemma add_nonneg {f g : QuasiHom G} : nonneg f → nonneg g → nonneg (f + g) := by
+  intro hf hg
+  simp only [nonneg] at hf hg ⊢
+  apply QuotientAddGroup.induction_on f
+  intro f
+  apply QuotientAddGroup.induction_on g
+  intro g
+  apply AlmostHom.add_nonneg
+  · sorry
+  · sorry
+
+
 
 
 def GP : AddCommGroup.TotalPositiveCone (QuasiHom G) := {
