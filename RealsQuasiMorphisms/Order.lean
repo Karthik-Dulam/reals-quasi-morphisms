@@ -3,6 +3,7 @@ import Mathlib.Algebra.Order.Field.Defs
 import RealsQuasiMorphisms.Algebra
 import Mathlib.Algebra.Order.Ring.Cone
 
+
 namespace AlmostHom
 
 variable {G : Type} [OrderedAddCommGroup G]
@@ -12,9 +13,9 @@ def nonpos (f : AlmostHom G) : Prop := ∃ b : ℤ , ∀ x : G, x ≥ 0 → f x 
 def le (f g : AlmostHom G) : Prop := nonneg (g - f)
 
 -- why exactly this is needed is well beyond me
-private theorem add_reduces_to_fun (f g : AlmostHom G) : toFun (f + g) = toFun f + toFun g := by rfl
-private theorem neg_reduces_to_fun (f : AlmostHom G) : toFun (-f) = - toFun f:= by rfl
-private theorem sub_reduces_to_fun (f g : AlmostHom G) : toFun (f - g) = toFun f - toFun g := by rfl
+private lemma add_reduces_to_fun (f g : AlmostHom G) : toFun (f + g) = toFun f + toFun g := by rfl
+private lemma neg_reduces_to_fun (f : AlmostHom G) : toFun (-f) = - toFun f:= by rfl
+private lemma sub_reduces_to_fun (f g : AlmostHom G) : toFun (f - g) = toFun f - toFun g := by rfl
 
 instance : Preorder (AlmostHom G) where
   le := le
@@ -32,60 +33,77 @@ instance : Preorder (AlmostHom G) where
                     simp only [sub_add_sub_cancel'] at h
                     apply h
 
+private lemma bounded_plus_nonneg_nonneg' (f : AlmostHom G) ⦃g : AlmostHom G⦄ (h : ∃ bound : ℕ, Bounded g bound) : f.nonneg → (f + g).nonneg := by
+  intro hf
+  let ⟨bound, hb⟩ := h
+  dsimp [Bounded] at hb
+  simp only [AlmostHom.nonneg] at hf
+  let ⟨a, ha⟩ := hf
+  simp only [AlmostHom.nonneg]
+  use a - bound
+  intro x hx
+  have ha := ha x hx
+  have hb := hb x
+  have hb : -bound ≤ g.toFun x := by
+    simp only [←Int.ofNat_le, Int.coe_natAbs] at hb
+    simp only [abs_le] at hb
+    exact hb.left
+  simp only [AlmostHom.add_reduces_to_fun]
+  show (f.toFun x) + (g.toFun x) ≥ a - bound
+  simp only [ge_iff_le] at ha ⊢
+  apply add_le_add ha hb
+
+protected theorem bounded_plus_nonneg_nonneg (f : AlmostHom G) (g : boundedAlmostHoms G) : f.nonneg → (f + g).nonneg := by
+  exact AlmostHom.bounded_plus_nonneg_nonneg' f g.property
+
 end AlmostHom
 
 namespace QuasiHom
 
 variable {G : Type} [OrderedAddCommGroup G]
 
-theorem bounded_plus_nonneg_nonneg (f : boundedAlmostHoms G) (g : AlmostHom G) : g.nonneg → (f + g).nonneg := by sorry
+#check (AddSubgroup.opposite (boundedAlmostHoms G))
+#check (AlmostHom G)ᵃᵒᵖ
+#check AddOpposite.op
+
 
 -- ten thousand lines of nonsense
 -- because lean
-theorem nonneg_respects_equiv' (f g: AlmostHom G): (QuotientAddGroup.con (boundedAlmostHoms G)) f g → f.nonneg → g.nonneg := by
+private lemma nonneg_respects_equiv' (f g: AlmostHom G): (QuotientAddGroup.con (boundedAlmostHoms G)) f g → f.nonneg → g.nonneg := by
   intro h hf
-  let a := AddAction.orbitRel (AddSubgroup.opposite (boundedAlmostHoms G)) (AlmostHom G)
-  let b := a.r
-  let H (x : AlmostHom G) := AddAction.orbit (AddSubgroup.opposite (boundedAlmostHoms G)) x
-  let c (x y : AlmostHom G) := x ∈ H y
-  have h' : b = c := by rfl
-  have h : b f g := by apply h
-  have h : c f g := by apply h
-  have h : f ∈ H g := by apply h
   have h : f ∈ AddAction.orbit (AddSubgroup.opposite (boundedAlmostHoms G)) g := by apply h
-  have h : f ∈ Set.range fun (x : boundedAlmostHoms G) => x + g := by
-    sorry
+  dsimp [AddAction.orbit] at h
+  -- TODO: stuck here
+  have h : f ∈ Set.range fun (x : boundedAlmostHoms G) => x + g := by sorry
   have h : ∃ (x : boundedAlmostHoms G), x + g = f := by
     simp only [Set.mem_range] at h
     exact h
-  have h : ∃ (x : boundedAlmostHoms G), (-x) + x + g = (-x) + f := by
-    let ⟨x, hx⟩ := h
-    use x
-    sorry -- pathetic
   have h : ∃ (x : boundedAlmostHoms G), g = x + f := by
     let ⟨x, hx⟩ := h
     use -x
-    simp at hx
-    exact hx
+    have hx' : -x + (x + g) = -x + f := by
+      simp only [hx]
+    simp only [neg_add_cancel_left] at hx'
+    exact hx'
   -- there should be a way to do the above with very little code, but I don't know how
   let ⟨x, hx⟩ := h
-  let h' := bounded_plus_nonneg_nonneg x f hf
-  simp [hx]
+  let h' := AlmostHom.bounded_plus_nonneg_nonneg f x hf
+  simp only [hx, add_comm]
   exact h'
 
-theorem nonneg_respects_equiv (f g: AlmostHom G): (QuotientAddGroup.con (boundedAlmostHoms G)) f g → f.nonneg = g.nonneg := by
+protected theorem nonneg_respects_equiv (f g: AlmostHom G): (QuotientAddGroup.con (boundedAlmostHoms G)) f g → f.nonneg = g.nonneg := by
   intro h
   apply propext
   apply Iff.intro
   · intro hf
-    apply nonneg_respects_equiv' f g h hf
+    apply QuasiHom.nonneg_respects_equiv' f g h hf
   · intro hg
-    apply nonneg_respects_equiv' g f ((QuotientAddGroup.con (boundedAlmostHoms G)).iseqv.symm h) hg
+    apply QuasiHom.nonneg_respects_equiv' g f ((QuotientAddGroup.con (boundedAlmostHoms G)).iseqv.symm h) hg
 
-def nonneg (f : QuasiHom G) : Prop := Quotient.liftOn f AlmostHom.nonneg nonneg_respects_equiv
+def nonneg (f : QuasiHom G) : Prop := Quotient.liftOn f AlmostHom.nonneg QuasiHom.nonneg_respects_equiv
 
-theorem zero_nonneg : nonneg (0 : QuasiHom G) := sorry
-theorem add_nonneg {f g : QuasiHom G} : nonneg f → nonneg g → nonneg (f + g) := sorry
+private lemma zero_nonneg : nonneg (0 : QuasiHom G) := sorry
+private lemma add_nonneg {f g : QuasiHom G} : nonneg f → nonneg g → nonneg (f + g) := sorry
 
 
 def GP : AddCommGroup.TotalPositiveCone (QuasiHom G) := {
