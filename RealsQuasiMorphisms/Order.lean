@@ -76,6 +76,22 @@ protected lemma add_nonneg {f g : AlmostHom G} : f.nonneg → g.nonneg → (f + 
   simp only [ge_iff_le] at ha hb ⊢
   apply add_le_add (ha x hx) (hb x hx)
 
+-- this really need not be split up like this
+private lemma nonneg_and_neg_nonneg_bounded' {f : AlmostHom G} : f.nonneg → (-f).nonneg → (∃ bound : ℕ, Bounded f bound) := by
+  intro hf hf'
+  dsimp only [AlmostHom.nonneg] at hf hf'
+  let ⟨a, ha⟩ := hf; let ⟨b, hb⟩ := hf'
+  let ⟨bound, hf⟩ := f.almostAdditive
+  dsimp [AlmostAdditive] at hf
+  
+  sorry
+
+protected lemma nonneg_and_neg_nonneg_bounded {f : AlmostHom G} : f.nonneg → (-f).nonneg → f ∈ boundedAlmostHoms G := by
+  intro hf hf'
+  let ⟨bound, hb⟩ := nonneg_and_neg_nonneg_bounded' (f := f) hf hf'
+  use bound
+  exact hb
+
 protected lemma nonneg_total : ∀ {f : AlmostHom G}, f.nonneg ∨ (-f).nonneg := by
   intro f
   sorry
@@ -131,18 +147,17 @@ private lemma zero_nonneg : nonneg (0 : QuasiHom G) := by
   apply AlmostHom.zero_nonneg
 
 private lemma add_nonneg {f g : QuasiHom G} : nonneg f → nonneg g → nonneg (f + g) := by
-  intro hf hg
-  simp only [nonneg] at hf hg ⊢
+  simp only [nonneg]
   apply QuotientAddGroup.induction_on f
-  intro f
   apply QuotientAddGroup.induction_on g
-  intro g
-  apply AlmostHom.add_nonneg
-  · sorry
-  · sorry
+  intro f g hf hg
+  apply AlmostHom.add_nonneg hf hg
 
-
-
+private lemma nonneg_antisymm {f : QuasiHom G} : nonneg f → nonneg (-f) → f = 0 := by
+  simp only [nonneg]
+  apply QuotientAddGroup.induction_on f
+  intro f hf hf'
+  sorry
 
 def GP : AddCommGroup.TotalPositiveCone (QuasiHom G) := {
   nonneg := nonneg,
