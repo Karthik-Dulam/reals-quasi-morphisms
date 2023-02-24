@@ -76,6 +76,19 @@ protected lemma add_nonneg {f g : AlmostHom G} : f.nonneg → g.nonneg → (f + 
   simp only [ge_iff_le] at ha hb ⊢
   apply add_le_add (ha x hx) (hb x hx)
 
+-- this might exist somewhere already
+private lemma neg_natAbs_le (a : ℤ) : -a.natAbs ≤ a := by
+  simp only [←Int.ofNat_le, Int.coe_natAbs]
+  simp only [neg_le]
+  sorry
+
+private lemma neg_le_natAbs (a : ℤ) : -a ≤ a.natAbs := by
+  simp only [←Int.ofNat_le, Int.coe_natAbs]
+  sorry
+
+
+
+
 -- this really need not be split up like this
 private lemma nonneg_and_neg_nonneg_bounded' {f : AlmostHom G} : f.nonneg → (-f).nonneg → (∃ bound : ℕ, Bounded f bound) := by
   intro hf hf'
@@ -83,8 +96,40 @@ private lemma nonneg_and_neg_nonneg_bounded' {f : AlmostHom G} : f.nonneg → (-
   let ⟨a, ha⟩ := hf; let ⟨b, hb⟩ := hf'
   let ⟨bound, hf⟩ := f.almostAdditive
   dsimp [AlmostAdditive] at hf
-  
-  sorry
+  let y := f 0
+  let nb := a.natAbs + b.natAbs + bound + y.natAbs
+  use nb
+  dsimp [Bounded]
+  intro x
+  by_cases hx:(x ≥ 0)
+  · let h' := hb x hx
+    simp only [AlmostHom.neg_reduces_to_fun, ge_iff_le] at h'
+    have h' : f x ≤ -b := by
+      rw [le_neg]
+      exact h'
+    let h'' := ha x hx
+    simp only [ge_iff_le] at h''
+    simp only [←Int.ofNat_le, Int.coe_natAbs]
+    simp only [abs_le]
+    apply And.intro
+    · have hga : a.natAbs ≤ nb := by
+        simp [add_assoc, le_add_iff_nonneg_right, zero_le]
+      have hga : -nb ≤ -(↑a.natAbs : ℤ) := by
+        simp only [←Int.ofNat_le] at hga
+        simp only [neg_le_neg, hga]
+      calc -(↑nb : ℤ)  ≤ -a.natAbs := hga
+            _ ≤ a := neg_natAbs_le a
+            _ ≤ f x := h''
+    · have hgb : Int.natAbs b ≤ Int.natAbs b + Int.natAbs a + bound + Int.natAbs (toFun f 0) := by
+        simp [add_assoc, le_add_iff_nonneg_right, zero_le]
+      simp only [←Int.ofNat_le] at hgb
+      have nbe : ↑(Int.natAbs b + Int.natAbs a + bound + Int.natAbs (toFun f 0)) = (↑nb : ℤ)  := by
+        simp [add_comm]
+      calc f x ≤ -b := h'
+             _ ≤ b.natAbs := neg_le_natAbs b
+             _ ≤ ↑(Int.natAbs b + Int.natAbs a + bound + Int.natAbs (toFun f 0)) := hgb
+             _ = ↑nb := nbe
+  · sorry
 
 protected lemma nonneg_and_neg_nonneg_bounded {f : AlmostHom G} : f.nonneg → (-f).nonneg → f ∈ boundedAlmostHoms G := by
   intro hf hf'
@@ -102,45 +147,23 @@ namespace QuasiHom
 
 variable {G : Type} [OrderedAddCommGroup G]
 
-#check (AddSubgroup.opposite (boundedAlmostHoms G))
-#check (AlmostHom G)ᵃᵒᵖ
-#check AddOpposite.op
 
-
--- ten thousand lines of nonsense
--- because lean
-private lemma nonneg_respects_equiv' (f g: AlmostHom G): (QuotientAddGroup.con (boundedAlmostHoms G)) f g → f.nonneg → g.nonneg := by
-  intro h hf
-  have h : f ∈ AddAction.orbit (AddSubgroup.opposite (boundedAlmostHoms G)) g := by apply h
-  dsimp [AddAction.orbit] at h
-  -- TODO: stuck here
-  have h : f ∈ Set.range fun (x : boundedAlmostHoms G) => x + g := by sorry
-  have h : ∃ (x : boundedAlmostHoms G), x + g = f := by
-    simp only [Set.mem_range] at h
-    exact h
-  have h : ∃ (x : boundedAlmostHoms G), g = x + f := by
-    let ⟨x, hx⟩ := h
-    use -x
-    have hx' : -x + (x + g) = -x + f := by
-      simp only [hx]
-    simp only [neg_add_cancel_left] at hx'
-    exact hx'
-  -- there should be a way to do the above with very little code, but I don't know how
-  let ⟨x, hx⟩ := h
-  let h' := AlmostHom.bounded_plus_nonneg_nonneg f x hf
-  simp only [hx, add_comm]
-  exact h'
-
-protected theorem nonneg_respects_equiv (f g: AlmostHom G): (QuotientAddGroup.con (boundedAlmostHoms G)) f g → f.nonneg = g.nonneg := by
-  intro h
+def nonneg (f : QuasiHom G) : Prop := Quot.liftOn f AlmostHom.nonneg (λ f g h ↦ by
+  rw [QuotientAddGroup.leftRel_apply] at h
+  let x : boundedAlmostHoms G := ⟨-f + g, h⟩
+  have h₁ : g = f + x := by
+    simp [add_neg_cancel_left]
+  have h₂ : f = g + -x := by
+    simp [add_neg_cancel_left]
   apply propext
   apply Iff.intro
   · intro hf
-    apply QuasiHom.nonneg_respects_equiv' f g h hf
+    rw [h₁]
+    apply AlmostHom.bounded_plus_nonneg_nonneg f x hf
   · intro hg
-    apply QuasiHom.nonneg_respects_equiv' g f ((QuotientAddGroup.con (boundedAlmostHoms G)).iseqv.symm h) hg
-
-def nonneg (f : QuasiHom G) : Prop := Quotient.liftOn f AlmostHom.nonneg QuasiHom.nonneg_respects_equiv
+    rw [h₂]
+    apply AlmostHom.bounded_plus_nonneg_nonneg g (-x) hg
+  )
 
 private lemma zero_nonneg : nonneg (0 : QuasiHom G) := by
   simp only [nonneg]
@@ -157,6 +180,7 @@ private lemma nonneg_antisymm {f : QuasiHom G} : nonneg f → nonneg (-f) → f 
   simp only [nonneg]
   apply QuotientAddGroup.induction_on f
   intro f hf hf'
+  
   sorry
 
 def GP : AddCommGroup.TotalPositiveCone (QuasiHom G) := {

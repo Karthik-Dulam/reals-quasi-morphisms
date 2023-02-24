@@ -26,7 +26,7 @@ Here, `G` is an additive commutative group.
     * [ ] Construct inverse of a non-zero `QuasiHom` (and prove that it is inverse)
     * [ ] Construct instance of `Field (QuasiHom ℤ)`
   - [ ] Order structure of `QuasiHom ℤ`
-    * [ ] Define a predicate `NonNeg` on `QuasiHom ℤ`
+    * [X] Define a predicate `NonNeg` on `QuasiHom ℤ`
     * [ ] Construct instance of `LinearOrderedAddCommGroup (QuasiHom ℤ)` using the predicate, via `TotalPositiveCone`
   - [ ] Construct instance of `ConditionallyCompleteLinearOrder (QuasiHom ℤ)`
   - [ ] Construct instance of `LinearOrderedField (QuasiHom ℤ)`
