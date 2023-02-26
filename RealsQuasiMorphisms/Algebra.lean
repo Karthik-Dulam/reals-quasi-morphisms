@@ -187,13 +187,24 @@ private def mul_one (a : QuasiHom ℤ) : smulHom a one = a := by
 private def inv (a : QuasiHom ℤ) : QuasiHom ℤ := by
   sorry
 
-/- private def exists_pair_ne : one ≠ 0 := by -/
-/-   rewrite [show ∀ a : QuasiHom ℤ, a ≠ 0 ↔ ¬a = 0 by intro; rfl] -/
-/-   unfold one -/
-/-   rewrite [QuotientAddGroup.eq_zero_iff] -/
+#check Quotient.exact
+#check QuotientAddGroup.eq'
+private def exists_pair_ne : one ≠ ⟦⟨0, 0, fun _ _ => Nat.le_refl ..⟩⟧ := by
+  /- rewrite [show ∀ a : QuasiHom ℤ, a ≠ 0 ↔ ¬a = 0 by intro; rfl] -/
+  /- by_contra h -/
+  /- apply QuotientAddGroup.eq -/
+  
+  /- apply Quotient.exact  (⟨ fun n => n, ⟨0, by intros _ _ ; simp only -/
+  /-                         [add_sub_cancel', sub_self, -/
+  /-                         Int.natAbs_zero, le_refl]⟩⟩) -/
+  /- have := Quotient.exact h; -/
+  /- simp [funext] at this; -/ 
+  sorry
 
+private def mul_comm (a b : QuasiHom ℤ) : smulHom a b = smulHom b a := 
+  sorry
 
-/- #exit -/
+#exit
 -- For some reason LSP is quite slow if it is allowed to work on this instance declaration.
 instance : Field (QuasiHom ℤ) :=
   let mul : Mul (QuasiHom ℤ) := ⟨ fun f g => smulHom f g ⟩

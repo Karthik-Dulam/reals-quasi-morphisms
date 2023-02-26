@@ -346,6 +346,9 @@ def boundedAlmostHoms : AddSubgroup (AlmostHom G) where
 variable (G) in
 def QuasiHom := AlmostHom G ⧸ boundedAlmostHoms G
 
+instance : HasEquiv (AlmostHom G) where
+  Equiv f g := f - g ∈ boundedAlmostHoms G
+
 abbrev EudoxusReal := QuasiHom ℤ
 
 /- Typeclass inference won't unfold the definition of `QuasiHom`
