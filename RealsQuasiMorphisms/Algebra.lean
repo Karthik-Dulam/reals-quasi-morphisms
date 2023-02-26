@@ -12,6 +12,7 @@ variable {G : Type _} [AddCommGroup G]
 section Comp
 namespace AlmostAdditive
 
+/- Composing an AlmostHom G with an AlmostHom ℤ to give an AlmostHom ℤ-/
 protected theorem comp
     ⦃f₁ : ℤ → ℤ⦄ ⦃bound₁ : ℕ⦄ (h₁ : AlmostAdditive f₁ bound₁)
     ⦃f₂ : G → ℤ⦄ ⦃bound₂ : ℕ⦄ (h₂ : AlmostAdditive f₂ bound₂)
@@ -39,6 +40,7 @@ protected theorem comp
         := h₂.almost_additive .. |> Nat.mul_le_mul_left (k := _)
                                  |> Nat.add_le_add_right (k := _)
 
+/-- If f₂ - f₁ is bounded then f ∘ (f₂ - f₁) is bounded. -/
 lemma comp_congr_right
         ⦃f  : ℤ → ℤ⦄ ⦃bound : ℕ⦄ (h : AlmostAdditive f  bound)
         ⦃f₁ f₂ : G → ℤ⦄ ⦃bound' : ℕ⦄ (h' : Bounded (-f₁ + f₂) bound')
@@ -59,6 +61,7 @@ lemma comp_congr_right
                 have := Nat.mul_le_mul_left (bound + (f 1).natAbs) this
                 linarith [this]
 
+/-- Composition as product is almost distributive. -/
 lemma almost_comp_add
         ⦃f  : ℤ → ℤ⦄ ⦃bound : ℕ⦄ (h : AlmostAdditive f  bound)
         (f₁ f₂ : G → ℤ)
@@ -93,9 +96,11 @@ lemma almost_comp_add (f : AlmostHom ℤ) (f₁ f₂ : AlmostHom G)
   let ⟨_, h⟩ := f.almostAdditive
   ⟨_, h.almost_comp_add f₁ f₂⟩
 
+/-- Left distributivity of composition with addition. -/
 lemma add_comp (f : AlmostHom G) (f₁ f₂ : AlmostHom ℤ)
     : (f₁ + f₂).comp f = f₁.comp f + f₂.comp f := by ext; rfl
 
+/-- If f₁ is bounded then f₁ ∘ f₂ is bounded. -/
 lemma bounded_comp (f₂ : AlmostHom G)
                    ⦃f₁ : AlmostHom ℤ⦄ (h : ∃ bound : ℕ, Bounded f₁ bound)
     : ∃ bound : ℕ, Bounded (f₁.comp f₂) bound :=
@@ -143,6 +148,7 @@ end AlmostHom
 
 namespace QuasiHom
 
+/- The following 'helper lemmas' are for showing field structure.-/
 
 private lemma right_distrib (a b c : QuasiHom ℤ) :
     smulHom (a + b) c = smulHom a c + smulHom b c := by
@@ -161,19 +167,6 @@ private lemma mul_assoc (a b c : QuasiHom ℤ) :
   apply QuotientAddGroup.induction_on c
   intro _ _ _; rfl
 
-
-
--- #check fun (H : AddSubgroup (AlmostHom G)) (a : AlmostHom G) =>
---   show ((↑a) : AlmostHom G ⧸ H) = ⟦a⟧ from QuotientAddGroup.coe_mk'
-
-/- private def one : QuasiHom ℤ := CoeTC.coe ({ -/
-/-   toFun := id -/
-/-   almostAdditive := ⟨0, by -/
-/-     intros _ _ -/
-/-     simp only  [Function.id_def, add_sub_cancel', sub_self, -/
-/-                 Int.natAbs_zero, le_refl 0]⟩ -/
-/- : AlmostHom ℤ}) -/
-
 private def one : QuasiHom ℤ := ⟦ ⟨ fun n => n, ⟨0, by intros _ _ ; simp only
                       [add_sub_cancel', sub_self,
                       Int.natAbs_zero, le_refl]⟩⟩  ⟧
@@ -187,8 +180,6 @@ private def mul_one (a : QuasiHom ℤ) : smulHom a one = a := by
 private def inv (a : QuasiHom ℤ) : QuasiHom ℤ := by
   sorry
 
-#check Quotient.exact
-#check QuotientAddGroup.eq'
 private def exists_pair_ne : one ≠ ⟦⟨0, 0, fun _ _ => Nat.le_refl ..⟩⟧ := by
   /- rewrite [show ∀ a : QuasiHom ℤ, a ≠ 0 ↔ ¬a = 0 by intro; rfl] -/
   /- by_contra h -/
@@ -204,8 +195,8 @@ private def exists_pair_ne : one ≠ ⟦⟨0, 0, fun _ _ => Nat.le_refl ..⟩⟧
 private def mul_comm (a b : QuasiHom ℤ) : smulHom a b = smulHom b a := 
   sorry
 
+/- For some reason LSP is quite slow if it is allowed to work on this instance declaration.-/
 #exit
--- For some reason LSP is quite slow if it is allowed to work on this instance declaration.
 instance : Field (QuasiHom ℤ) :=
   let mul : Mul (QuasiHom ℤ) := ⟨ fun f g => smulHom f g ⟩
   {

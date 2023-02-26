@@ -169,6 +169,8 @@ private lemma almost_smul_comm_int
     : |n * f m - m * f n| ≤ bound * (|m| + |n| + 2) := by
   lax_exact h.almost_smul_comm m n 1 <;> rw [zsmul_int_one]
 
+/-- The following lemmas are useful in bounding compositions of quasi-morphisms. -/
+
 lemma linear_growth_upper_bound
   : |f (n • g)| ≤ (bound + |f g|) * |n| + bound :=
   calc |f (n • g)|
@@ -239,6 +241,8 @@ private lemma almost_smul_comm_int (f : AlmostHom ℤ) (m n : ℤ)
     : bdd n * f m - m * f n :=
   local_wrapper almost_smul_comm_int
 -/
+
+/-- The following lemmas are useful in bounding compositions of quasi-morphisms. -/
 
 lemma linear_growth_upper_bound
   : ∃ a b : ℕ, ∀ n : ℤ, |f (n • g)| ≤ a * |n| + b :=
@@ -324,6 +328,7 @@ def Bounded (f : G → ℤ) (bound : ℕ) := ∀ g : G, |f g| ≤ bound
 
 /- We don't really need this, but we might as well prove it. -/
 variable {f : G → ℤ} {bound : ℕ} in
+/-- A bounded function G → ℤ is an AlmostHom. -/
 lemma Bounded.almost_additive (h : Bounded f bound)
     : AlmostAdditive f (bound * 3) := fun g₁ g₂ =>
   calc |f (g₁ + g₂) - f g₁ - f g₂|
@@ -345,9 +350,6 @@ def boundedAlmostHoms : AddSubgroup (AlmostHom G) where
 
 variable (G) in
 def QuasiHom := AlmostHom G ⧸ boundedAlmostHoms G
-
-instance : HasEquiv (AlmostHom G) where
-  Equiv f g := f - g ∈ boundedAlmostHoms G
 
 abbrev EudoxusReal := QuasiHom ℤ
 
