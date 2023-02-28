@@ -39,7 +39,9 @@ instance : Preorder (AlmostHom G) where
                     apply h
 
 
-private lemma bounded_plus_nonneg_nonneg' (f : AlmostHom G) ⦃g : AlmostHom G⦄ (h : ∃ bound : ℕ, Bounded g bound) : f.nonneg → (f + g).nonneg := by
+private lemma bounded_plus_nonneg_nonneg' (f : AlmostHom G)
+        ⦃g : AlmostHom G⦄ (h : ∃ bound : ℕ, Bounded g bound)
+    : f.nonneg → (f + g).nonneg := by
   intro hf
   let ⟨bound, hb⟩ := h
   rw [Bounded] at hb
@@ -54,7 +56,8 @@ private lemma bounded_plus_nonneg_nonneg' (f : AlmostHom G) ⦃g : AlmostHom G�
     
     Adding a bounded quasi-morphism to any other quasi-morphism can only change the image of any element by at most some bound.
     Thus any lower bound is preserved up to a shift of at most that bound. -/
-protected theorem bounded_plus_nonneg_nonneg {f : AlmostHom G} (g : boundedAlmostHoms G) : f.nonneg → (f + g).nonneg := by
+protected theorem bounded_plus_nonneg_nonneg {f : AlmostHom G} (g : boundedAlmostHoms G)
+    : f.nonneg → (f + g).nonneg := by
   exact AlmostHom.bounded_plus_nonneg_nonneg' f g.property
 
 /-- Since the `0` quasi-morphism maps everything to `0`, it trivially follows that it is non-negative. -/
@@ -82,7 +85,8 @@ private lemma neg_le_natAbs (a : ℤ) : -a ≤ a.natAbs := by
 
 
 -- this really need not be split up like this
-private lemma nonneg_and_neg_nonneg_bounded' {f : AlmostHom G} : f.nonneg → (-f).nonneg → (∃ bound : ℕ, Bounded f bound) := by
+private lemma nonneg_and_neg_nonneg_bounded' {f : AlmostHom G}
+    : f.nonneg → (-f).nonneg → (∃ bound : ℕ, Bounded f bound) := by
   intro hf hf'
   let ⟨a, ha⟩ := hf; let ⟨b, hb⟩ := hf'
   let ⟨bound, hf⟩ := f.almostAdditive
@@ -115,7 +119,8 @@ private lemma nonneg_and_neg_nonneg_bounded' {f : AlmostHom G} : f.nonneg → (-
 /-- If `f` is a quasi-morphism such that both `f` and `-f` are non-negative, then `f` is bounded.
 
     This is a somewhat non-trivial result (not proven here yet). -/
-protected lemma nonneg_and_neg_nonneg_bounded {f : AlmostHom G} : f.nonneg → (-f).nonneg → f ∈ boundedAlmostHoms G := by
+protected lemma nonneg_and_neg_nonneg_bounded {f : AlmostHom G}
+    : f.nonneg → (-f).nonneg → f ∈ boundedAlmostHoms G := by
   intro hf hf'
   let ⟨bound, hb⟩ := nonneg_and_neg_nonneg_bounded' (f := f) hf hf'
   use bound
@@ -124,8 +129,7 @@ protected lemma nonneg_and_neg_nonneg_bounded {f : AlmostHom G} : f.nonneg → (
 /-- If `f` is a quasi-morphism, then at least one of `f` and `-f` must be non-negative.
 
     This is a somewhat non-trivial result (not proven here yet). -/
-protected lemma nonneg_total : ∀ {f : AlmostHom G}, f.nonneg ∨ (-f).nonneg := by
-  intro f
+protected lemma nonneg_total {f : AlmostHom G} : f.nonneg ∨ (-f).nonneg := by
   sorry
 
 end AlmostHom
@@ -181,22 +185,20 @@ protected lemma nonneg_antisymm {f : QuasiHom G} : f.nonneg → (-f).nonneg → 
 /-- If `f` is a quasi-morphism, then at least one of `f` and `-f` must be non-negative.
 
     This is a somewhat non-trivial result (not proven here yet). -/
-protected lemma nonneg_total : ∀ {f : QuasiHom G}, f.nonneg ∨ (-f).nonneg := by
-  intro f
+protected lemma nonneg_total {f : QuasiHom G} : f.nonneg ∨ (-f).nonneg := by
   apply QuotientAddGroup.induction_on f
   intro f
   exact AlmostHom.nonneg_total
 
 
 /-- The set of non-negative quotients of quasi-morphisms. It forms a total positive cone and thus induces a linear order. -/
-def GP : AddCommGroup.TotalPositiveCone (QuasiHom G) := {
-  nonneg := QuasiHom.nonneg,
-  zero_nonneg := QuasiHom.zero_nonneg,
-  add_nonneg := QuasiHom.add_nonneg,
-  nonneg_antisymm := QuasiHom.nonneg_antisymm,
-  nonneg_total := by simp only [QuasiHom.nonneg_total, forall_const],
+def GP : AddCommGroup.TotalPositiveCone (QuasiHom G) where
+  nonneg := QuasiHom.nonneg
+  zero_nonneg := QuasiHom.zero_nonneg
+  add_nonneg := QuasiHom.add_nonneg
+  nonneg_antisymm := QuasiHom.nonneg_antisymm
+  nonneg_total := by simp only [QuasiHom.nonneg_total, forall_const]
   nonnegDecidable := sorry --  no clue how decidable works
-}
 
 -- instance : LinearOrder (QuasiHom G) where
 --   le := sorry

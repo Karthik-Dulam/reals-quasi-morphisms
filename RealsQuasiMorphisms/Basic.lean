@@ -22,14 +22,15 @@ section TypeDef
 variable [Add G]
 
 def AlmostAdditive (f : G → ℤ) (bound : ℕ) :=
-∀ g₁ g₂ : G, |f (g₁ + g₂) - f g₁ - f g₂| ≤ bound
+  ∀ g₁ g₂ : G, |f (g₁ + g₂) - f g₁ - f g₂| ≤ bound
 
 /- Remark: we have used an `∃ ...` field rather than flattening out
 with an additional `bound` field so that the same function with a
 different bound is the same `AlmostHom`. This is necessary for
 `AlmostHom` to be a lawful algebraic structure at all, since most of
 the laws only hold for the functions, not for the bounds. -/
-variable (G) in structure AlmostHom where
+variable (G) in
+structure AlmostHom where
   toFun : G → ℤ
   almostAdditive : ∃ bound : ℕ, AlmostAdditive toFun bound
 
@@ -38,13 +39,14 @@ instance : CoeFun (AlmostHom G) fun _ => G → ℤ where
 
 @[ext]
 theorem AlmostHom.ext
-  : {f₁ f₂ : AlmostHom G} → f₁.toFun = f₂.toFun → f₁ = f₂
+    : {f₁ f₂ : AlmostHom G} → f₁.toFun = f₂.toFun → f₁ = f₂
 | ⟨_f, _⟩, ⟨.(_f), _⟩, rfl => rfl
 
 end TypeDef
 
 
 /-! # Properties and structure of `AlmostAdditive`/`AlmostHom` -/
+
 variable [AddCommGroup G]
 
 /-! Because we can no longer directly access the bound associated with
@@ -60,7 +62,8 @@ then returning the bound specified with the `using` clause (or just
 `bound` if not specified) with the proof being the given field of `h`
 applied to the specified number of arguments (or to `..` if not
 specified). -/
-local syntax (name := __localWrapper) "local_wrapper " ident (num)? (" using " term)? : term
+local syntax (name := __localWrapper)
+  "local_wrapper " ident (num)? (" using " term)? : term
 
 set_option hygiene false in
 open Lean (TSyntax) in open Lean.Syntax in
@@ -149,7 +152,7 @@ lemma almost_smul : |f (m • g) - m * f g| ≤ bound * (|m| + 1) := by
 /-- A kind of commutativity of scaling by ℤ, with
 one scale factor before and another after applying a quasi-morphism. -/
 private lemma almost_smul_comm
-  : |n * f (m • g) - m * f (n • g)| ≤ bound * (|m| + |n| + 2) :=
+    : |n * f (m • g) - m * f (n • g)| ≤ bound * (|m| + |n| + 2) :=
   calc |n * f (m • g) - m * f (n • g)|
     ≤ |f ((m * n) • g) - n * f (m • g)| + |f ((m * n) • g) - m * f (n • g)|
         := Int.triangle_ineq' ..
@@ -172,7 +175,7 @@ private lemma almost_smul_comm_int
 /-- The following lemmas are useful in bounding compositions of quasi-morphisms. -/
 
 lemma linear_growth_upper_bound
-  : |f (n • g)| ≤ (bound + |f g|) * |n| + bound :=
+    : |f (n • g)| ≤ (bound + |f g|) * |n| + bound :=
   calc |f (n • g)|
     ≤ |f (n • g) - n * f g| + |n * f g|
         := by lax_exact Int.natAbs_add_le (f (n • g) - n * f g) (n * f g); linarith
@@ -185,7 +188,7 @@ lemma linear_growth_upper_bound_int
   lax_exact h.linear_growth_upper_bound n 1; rw [zsmul_int_one]
 
 lemma linear_growth_lower_bound
-  : (|f g| - bound) * |n| - bound ≤ |f (n • g)| := by
+    : (|f g| - bound) * |n| - bound ≤ |f (n • g)| := by
   rewrite [tsub_mul, Nat.sub_sub, ←Nat.mul_succ]
   apply Nat.sub_le_of_le_add; rewrite [Nat.add_comm]
   calc |f g| * |n|
@@ -219,22 +222,22 @@ macro_rules (kind := __existsBound)
 | `(bdd $expr:term) => `(∃ bound : ℕ, |$expr| ≤ bound)
 
 lemma almost_additive : bdd f (g₁ + g₂) - f g₁ - f g₂ for all (g₁ g₂ : G) :=
-local_wrapper almost_additive 0
+  local_wrapper almost_additive 0
 
 /- Not useful, since we don't say anything about what the bound is.
 lemma almost_zero : bdd f 0 :=
-local_wrapper almost_zero 0
+  local_wrapper almost_zero 0
 -/
 
 lemma almost_neg : bdd f (-g) - -f g for all (g : G) :=
-local_wrapper almost_neg 0
+  local_wrapper almost_neg 0
 
 lemma almost_smul : bdd f (m • g) - m * f g for all (g : G) :=
-local_wrapper almost_smul 1
+  local_wrapper almost_smul 1
 
 private lemma almost_smul_comm
-  : bdd n * f (m • g) - m * f (n • g) for all (g : G) :=
-local_wrapper almost_smul_comm 2
+    : bdd n * f (m • g) - m * f (n • g) for all (g : G) :=
+  local_wrapper almost_smul_comm 2
 
 /- Not useful, since we don't say anything about what the bound is.
 private lemma almost_smul_comm_int (f : AlmostHom ℤ) (m n : ℤ)
@@ -245,24 +248,24 @@ private lemma almost_smul_comm_int (f : AlmostHom ℤ) (m n : ℤ)
 /-- The following lemmas are useful in bounding compositions of quasi-morphisms. -/
 
 lemma linear_growth_upper_bound
-  : ∃ a b : ℕ, ∀ n : ℤ, |f (n • g)| ≤ a * |n| + b :=
-let ⟨_, h⟩ := f.almostAdditive
-⟨_, _, h.linear_growth_upper_bound (g := g)⟩
+    : ∃ a b : ℕ, ∀ n : ℤ, |f (n • g)| ≤ a * |n| + b :=
+  let ⟨_, h⟩ := f.almostAdditive
+  ⟨_, _, h.linear_growth_upper_bound (g := g)⟩
 
 lemma linear_growth_upper_bound_int (f : AlmostHom ℤ)
-  : ∃ a b : ℕ, ∀ n : ℤ, |f n| ≤ a * |n| + b :=
-let ⟨_, h⟩ := f.almostAdditive
-⟨_, _, h.linear_growth_upper_bound_int⟩
+    : ∃ a b : ℕ, ∀ n : ℤ, |f n| ≤ a * |n| + b :=
+  let ⟨_, h⟩ := f.almostAdditive
+  ⟨_, _, h.linear_growth_upper_bound_int⟩
 
 lemma linear_growth_lower_bound
-  : ∃ a b : ℕ, ∀ n : ℤ, a * |n| - b ≤ |f (n • g)| :=
-let ⟨_, h⟩ := f.almostAdditive
-⟨_, _, h.linear_growth_lower_bound (g := g)⟩
+    : ∃ a b : ℕ, ∀ n : ℤ, a * |n| - b ≤ |f (n • g)| :=
+  let ⟨_, h⟩ := f.almostAdditive
+  ⟨_, _, h.linear_growth_lower_bound (g := g)⟩
 
 lemma linear_growth_lower_bound_int (f : AlmostHom ℤ)
-  : ∃ a b : ℕ, ∀ n : ℤ, a * |n| - b ≤ |f n| :=
-let ⟨_, h⟩ := f.almostAdditive
-⟨_, _, h.linear_growth_lower_bound_int⟩
+    : ∃ a b : ℕ, ∀ n : ℤ, a * |n| - b ≤ |f n| :=
+  let ⟨_, h⟩ := f.almostAdditive
+  ⟨_, _, h.linear_growth_lower_bound_int⟩
 
 end AlmostHom
 

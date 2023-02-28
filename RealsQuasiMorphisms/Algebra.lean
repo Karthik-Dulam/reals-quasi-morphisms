@@ -14,9 +14,10 @@ namespace AlmostAdditive
 
 /- Composing an AlmostHom G with an AlmostHom ℤ to give an AlmostHom ℤ-/
 protected theorem comp
-    ⦃f₁ : ℤ → ℤ⦄ ⦃bound₁ : ℕ⦄ (h₁ : AlmostAdditive f₁ bound₁)
-    ⦃f₂ : G → ℤ⦄ ⦃bound₂ : ℕ⦄ (h₂ : AlmostAdditive f₂ bound₂)
-  : AlmostAdditive (f₁ ∘ f₂) <| (bound₁ + |f₁ 1|) * bound₂ + bound₁ * 3 := fun x y =>
+        ⦃f₁ : ℤ → ℤ⦄ ⦃bound₁ : ℕ⦄ (h₁ : AlmostAdditive f₁ bound₁)
+        ⦃f₂ : G → ℤ⦄ ⦃bound₂ : ℕ⦄ (h₂ : AlmostAdditive f₂ bound₂)
+    : AlmostAdditive (f₁ ∘ f₂) <|
+        (bound₁ + |f₁ 1|) * bound₂ + bound₁ * 3 := fun x y =>
   calc |f₁ (f₂ (x + y)) - f₁ (f₂ x) - f₁ (f₂ y)|
     ≤ |f₁ (f₂ (x + y)) - f₁ (f₂ (x + y) - f₂ x - f₂ y) - f₁ (f₂ x + f₂ y)|
       + |f₁ (f₂ (x + y) - f₂ x - f₂ y)|
