@@ -4,9 +4,9 @@ import RealsQuasiMorphisms.Algebra
 import Mathlib.Algebra.Order.Ring.Cone
 
 
-namespace AlmostHom
+variable {G : Type _} [OrderedAddCommGroup G]
 
-variable {G : Type} [OrderedAddCommGroup G]
+namespace AlmostHom
 
 /-- An almost-homomorphism `f : G → ℤ` is non-negative if the image (under `f`) of `G ≥ 0` is bounded below. -/
 protected def nonneg (f : AlmostHom G) : Prop := ∃ a : ℤ , ∀ x : G, x ≥ 0 → f x ≥ a
@@ -124,16 +124,13 @@ protected lemma nonneg_and_neg_nonneg_bounded {f : AlmostHom G}
 
 /- This is a somewhat non-trivial result and not proven yet. -/
 /-- If `f` is an almost-homomorphism, then at least one of `f` and `-f` must be non-negative. -/
-protected lemma nonneg_total {f : AlmostHom G} : f.nonneg ∨ (-f).nonneg := by
+protected lemma nonneg_total (f : AlmostHom G) : f.nonneg ∨ (-f).nonneg := by
   sorry
 
 end AlmostHom
 
 
 namespace QuasiHom
-
-variable {G : Type} [OrderedAddCommGroup G]
-
 
 /-- A quasi-morphism `f` is non-negative if any representative almost-homomorphism is non-negative.
 
@@ -176,10 +173,10 @@ protected lemma nonneg_antisymm {f : QuasiHom G} : f.nonneg → (-f).nonneg → 
 
 /- This depends on the corresponding result for almost-homomorphisms, which is not yet proved. -/
 /-- If `f` is a quasi-morphism, then at least one of `f` and `-f` must be non-negative. -/
-protected lemma nonneg_total {f : QuasiHom G} : f.nonneg ∨ (-f).nonneg := by
+protected lemma nonneg_total (f : QuasiHom G) : f.nonneg ∨ (-f).nonneg := by
   apply QuotientAddGroup.induction_on f
   intro f
-  exact AlmostHom.nonneg_total
+  exact AlmostHom.nonneg_total f
 
 
 /- The lemma used for `nonneg_total` is not yet proved. -/
