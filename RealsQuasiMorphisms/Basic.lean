@@ -4,7 +4,7 @@ import Mathlib.GroupTheory.Subgroup.Basic
 import Mathlib.GroupTheory.QuotientGroup
 
 import Util.Arithmetic
-import Util.Tactics
+import Util.Meta.Tactics
 
 /-! Defines quasi-morphisms from an abelian group to ℤ and algebraic operations on them.
 
