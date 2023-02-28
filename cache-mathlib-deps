@@ -1,4 +1,16 @@
 #!/bin/sh
+# Show usage if asked for, or as a warning if no args are provided.
+if [ "$#" = 0 ] || [ "$1" = --help ] || [ "$1" = -h ]; then
+	printf 'Usage: ./cache-mathlib-deps ARGS...
+
+Executes: lake exe cache ARGS... MATHLIB-FILES
+  where MATHLIB-FILES is the list of mathlib files which are directly
+  imported in the source code.
+
+  If no ARGS are provided or the first ARG is --help or -h, shows this
+  instead.'
+else # execute the rest of the script
+
 # Find all 'our' .lean files
 find RealsQuasiMorphisms.lean RealsQuasiMorphisms Util \
 	-type f -name '*.lean' -execdir \
@@ -8,3 +20,5 @@ cut -c 8- | sed 'y:.:/:;s:$:.lean:' |
 # Call lake exe cache, with command-line arguments and then the
 # mathlib files as additional arguments
 xargs lake exe cache "$@"
+
+fi # [ "$#" = 0 ] || [ "$1" = --help ] || [ "$1" = -h ]
