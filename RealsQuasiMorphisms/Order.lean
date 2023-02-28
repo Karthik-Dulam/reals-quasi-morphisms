@@ -182,13 +182,13 @@ protected lemma nonneg_total (f : QuasiHom G) : f.nonneg ∨ (-f).nonneg := by
 /- The lemma used for `nonneg_total` is not yet proved. -/
 /-- The set of non-negative quasi-morphisms, as a 'total positive cone' (the
 convenient way to construct ordered additive groups). -/
-def GP : AddCommGroup.TotalPositiveCone (QuasiHom G) where
+noncomputable def GP : AddCommGroup.TotalPositiveCone (QuasiHom G) where
   nonneg := QuasiHom.nonneg
   zero_nonneg := QuasiHom.zero_nonneg
   add_nonneg := QuasiHom.add_nonneg
   nonneg_antisymm := QuasiHom.nonneg_antisymm
   nonneg_total := by simp only [QuasiHom.nonneg_total, forall_const]
-  nonnegDecidable := sorry --  no clue how decidable works
+  nonnegDecidable := (Classical.dec ·.nonneg)
 
 -- instance : LinearOrder (QuasiHom G) where
 --   le := sorry
