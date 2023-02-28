@@ -391,13 +391,12 @@ variable (G) in
 
 This is the quotient of the `AlmostHom`s by the additive subgroup of bounded
 functions. -/
-def QuasiHom := AlmostHom G ⧸ boundedAlmostHoms G
+abbrev QuasiHom := AlmostHom G ⧸ boundedAlmostHoms G
 
 /-- The Eudoxus construction of the real numbers as quasi-homomorphisms from ℤ to ℤ. -/
 abbrev EudoxusReal := QuasiHom ℤ
 
 /- Typeclass inference won't unfold the definition of `QuasiHom`
 automatically, so the instance must be defined manually. -/
-instance : AddCommGroup (QuasiHom G) := by unfold QuasiHom; infer_instance
 
 end Quotient
