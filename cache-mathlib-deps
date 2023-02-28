@@ -1,0 +1,10 @@
+#!/bin/sh
+# Find all 'our' .lean files
+find RealsQuasiMorphisms.lean RealsQuasiMorphisms Util \
+	-type f -name '*.lean' -execdir \
+grep --no-filename '^import Mathlib' {} + | # filter to import lines in them
+# Convert import lines into files suitable to pass to lake exe cache
+cut -c 8- | sed 'y:.:/:;s:$:.lean:' |
+# Call lake exe cache, with command-line arguments and then the
+# mathlib files as additional arguments
+xargs lake exe cache "$@"
