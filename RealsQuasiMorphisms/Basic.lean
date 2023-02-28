@@ -71,21 +71,21 @@ specified). -/
 local syntax (name := __localWrapper)
   "local_wrapper " ident (num)? (" using " term)? : term
 
-set_option hygiene false in
-open Lean (TSyntax) in open Lean.Syntax in
 macro_rules (kind := __localWrapper)
-  /- `bound` is by default `_`, i.e., to be filled by unification. -/
-| `(local_wrapper $field:ident $[$args:num]?) =>
-  `(local_wrapper $field $[$args]? using _)
-| `(local_wrapper $field:ident $[$args:num]? using $bound:term) => do
-  let hField : TSyntax `term ← `(h.$field:ident)
-  let secondTerm : TSyntax `term ← match args with
-  | some numArgs => pure<| .mkArray numArgs.getNat (←`(_)) |> mkApp hField
+| `(local_wrapper $field:ident $[$args:num]? $[using $bound:term]?) => do
+  let secondTerm : Lean.Syntax.Term ← match args with
+  | some numArgs => `(h.$field $(.mkArray numArgs.getNat (←`(_)))*)
     /- If the number of args to apply the field of `h` to is not
     specified, use `..`. -/
-  | none         => `($hField ..)
-  `(let ⟨bound, h⟩ := f.almostAdditive
-    ⟨$bound, $secondTerm⟩)
+  | none         => `(h.$field ..)
+  /- Unhygienic visible `bound` (if bound argument is provided) and captured `f`. -/
+  `(let ⟨$(if bound.isSome then
+             -- set_option hygiene false in ←`(bound)
+             Lean.mkIdent `bound
+           else
+             ←`(bound))         , h⟩ := $(Lean.mkIdent `f).almostAdditive
+     /- `bound` is by default `_`, i.e., to be filled by unification. -/
+    ⟨$(bound.getD <|← `(_)), $secondTerm⟩)
 
 section AlmostProperties
 
@@ -232,7 +232,6 @@ variable (f : AlmostHom G) (g : G) (m n : ℤ)
 `bdd <expr> for all (<bindings>)` expresses a uniform bound. -/
 -- Why is there no way to say "exactly what ∀ accepts"?
 local syntax (name := __existsBound) "bdd " term ("for all " bracketedBinder)? : term
-set_option hygiene false in
 macro_rules (kind := __existsBound)
 | `(bdd $expr:term for all $binders:bracketedBinder) =>
   `(∃ bound : ℕ, ∀ $binders, |$expr| ≤ bound)
