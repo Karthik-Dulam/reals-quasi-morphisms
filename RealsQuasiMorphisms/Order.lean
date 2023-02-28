@@ -8,9 +8,9 @@ namespace AlmostHom
 
 variable {G : Type} [OrderedAddCommGroup G]
 
-/-- A quasi-morphism `f : G → ℤ` is non-negative if the image (under `f`) of `G ≥ 0` is bounded below. -/
+/-- An almost-homomorphism `f : G → ℤ` is non-negative if the image (under `f`) of `G ≥ 0` is bounded below. -/
 protected def nonneg (f : AlmostHom G) : Prop := ∃ a : ℤ , ∀ x : G, x ≥ 0 → f x ≥ a
-/-- A quasi-morphism `f : G → ℤ` is non-positive if the image (under `f`) of `G ≥ 0` is bounded above (unused). -/
+/-- An almost-homomorphism `f : G → ℤ` is non-positive if the image (under `f`) of `G ≥ 0` is bounded above (unused). -/
 protected def nonpos (f : AlmostHom G) : Prop := ∃ b : ℤ , ∀ x : G, x ≥ 0 → f x ≤ b
 /-- `f ≤ g` is equivalent to stating `g - f` is non-negative. -/
 protected def le (f g : AlmostHom G) : Prop := AlmostHom.nonneg (g - f)
@@ -39,6 +39,9 @@ instance : Preorder (AlmostHom G) where
                     apply h
 
 
+/- Adding a bounded function to any other can only change the image of
+any element by at most some bound. Thus any lower bound is preserved
+up to a shift in the bound. -/
 private lemma bounded_plus_nonneg_nonneg' (f : AlmostHom G)
         ⦃g : AlmostHom G⦄ (h : ∃ bound : ℕ, Bounded g bound)
     : f.nonneg → (f + g).nonneg := by
@@ -52,22 +55,17 @@ private lemma bounded_plus_nonneg_nonneg' (f : AlmostHom G)
     exact (hb x).left
   exact add_le_add (ha x hx) hb
 
-/-- If `f` is a non-negative quasi-morphism and `g` is a bounded quasi-morphism, then `f + g` is a non-negative quasi-morphism.
-    
-    Adding a bounded quasi-morphism to any other quasi-morphism can only change the image of any element by at most some bound.
-    Thus any lower bound is preserved up to a shift of at most that bound. -/
+/-- If `f` is a non-negative almost-homomorphism and `g` is bounded, then `f + g` is non-negative. -/
 protected theorem bounded_plus_nonneg_nonneg {f : AlmostHom G} (g : boundedAlmostHoms G)
     : f.nonneg → (f + g).nonneg := by
   exact AlmostHom.bounded_plus_nonneg_nonneg' f g.property
 
-/-- Since the `0` quasi-morphism maps everything to `0`, it trivially follows that it is non-negative. -/
+/-- The almost-homomorphism 0 is non-negative. -/
 protected lemma zero_nonneg : (0 : AlmostHom G).nonneg := by
   use -1; intro x _
   show -1 ≤ 0; simp only [Left.neg_nonpos_iff]
 
-/-- If `f` and `g` are non-negative quasi-morphisms then `f + g` is also a non-negative quasi-morphism.
-
-    This follows as the lower bounds for (images under) `f` and `g` can simply be added to get a lower bound for `f + g`. -/
+/-- If `f` and `g` are non-negative almost-homomorphisms then `f + g` is also non-negative. -/
 protected lemma add_nonneg {f g : AlmostHom G} : f.nonneg → g.nonneg → (f + g).nonneg := by
   intro hf hg
   let ⟨a, ha⟩ := hf; let ⟨b, hb⟩ := hg
@@ -116,9 +114,7 @@ private lemma nonneg_and_neg_nonneg_bounded' {f : AlmostHom G}
       linarith [neg_natAbs_le b]
   · sorry
 
-/-- If `f` is a quasi-morphism such that both `f` and `-f` are non-negative, then `f` is bounded.
-
-    This is a somewhat non-trivial result (not proven here yet). -/
+/-- If `f` is an almost-homomorphism such that both `f` and `-f` are non-negative, then `f` is bounded. -/
 protected lemma nonneg_and_neg_nonneg_bounded {f : AlmostHom G}
     : f.nonneg → (-f).nonneg → f ∈ boundedAlmostHoms G := by
   intro hf hf'
@@ -126,9 +122,8 @@ protected lemma nonneg_and_neg_nonneg_bounded {f : AlmostHom G}
   use bound
   exact hb
 
-/-- If `f` is a quasi-morphism, then at least one of `f` and `-f` must be non-negative.
-
-    This is a somewhat non-trivial result (not proven here yet). -/
+/- This is a somewhat non-trivial result and not proven yet. -/
+/-- If `f` is an almost-homomorphism, then at least one of `f` and `-f` must be non-negative. -/
 protected lemma nonneg_total {f : AlmostHom G} : f.nonneg ∨ (-f).nonneg := by
   sorry
 
@@ -140,9 +135,9 @@ namespace QuasiHom
 variable {G : Type} [OrderedAddCommGroup G]
 
 
-/-- A member `f` of the quotient group of quasi-morphisms is defined to be non-negative if it is represented by some non-negative quasi-morphism. 
+/-- A quasi-morphism `f` is non-negative if any representative almost-homomorphism is non-negative.
 
-    This is well defined as adding a bounded quasi-morphism to a non-negative quasi-morphism gives a non-negative quasi-morphism. -/
+This is well-defined by `bounded_plus_nonneg_nonneg`. -/
 protected def nonneg (f : QuasiHom G) : Prop := Quot.liftOn f AlmostHom.nonneg (λ f g h ↦ by
   rw [QuotientAddGroup.leftRel_apply] at h
   let x : boundedAlmostHoms G := ⟨-f + g, h⟩
@@ -161,37 +156,35 @@ protected def nonneg (f : QuasiHom G) : Prop := Quot.liftOn f AlmostHom.nonneg (
   )
 
 
-/-- Since the `0` quotient is represented by the `0` quasi-morphism, it's non-negativeness follows from the non-negativeness of the `0` quasi-morphism. -/
+/-- The quasi-morphism 0 is non-negative. -/
 protected lemma zero_nonneg : QuasiHom.nonneg (0 : QuasiHom G) := by
   apply AlmostHom.zero_nonneg
 
-/-- The sum of two non-negative quotients of quasi-morphisms is non-negative since the sum of two non-negative quasi-morphisms is non-negative. -/
+/-- The sum of two non-negative quasi-morphisms is non-negative. -/
 protected lemma add_nonneg {f g : QuasiHom G} : f.nonneg → g.nonneg → (f + g).nonneg := by
   apply QuotientAddGroup.induction_on f
   apply QuotientAddGroup.induction_on g
   intro f g hf hg
   apply AlmostHom.add_nonneg hf hg
 
-/-- If `f` and `-f` are both non-negative quotients of quasi-morphisms, then `f` must be `0`.
-    
-    This is a somewhat non-trivial result (not proven here yet). -/
+/-- If `f` and `-f` are both non-negative quasi-morphisms, then `f` must be `0`. -/
 protected lemma nonneg_antisymm {f : QuasiHom G} : f.nonneg → (-f).nonneg → f = 0 := by
   apply QuotientAddGroup.induction_on f
   intro f hf hf'
   rw [QuotientAddGroup.eq_zero_iff]
   exact AlmostHom.nonneg_and_neg_nonneg_bounded hf hf'
 
-
-/-- If `f` is a quasi-morphism, then at least one of `f` and `-f` must be non-negative.
-
-    This is a somewhat non-trivial result (not proven here yet). -/
+/- This depends on the corresponding result for almost-homomorphisms, which is not yet proved. -/
+/-- If `f` is a quasi-morphism, then at least one of `f` and `-f` must be non-negative. -/
 protected lemma nonneg_total {f : QuasiHom G} : f.nonneg ∨ (-f).nonneg := by
   apply QuotientAddGroup.induction_on f
   intro f
   exact AlmostHom.nonneg_total
 
 
-/-- The set of non-negative quotients of quasi-morphisms. It forms a total positive cone and thus induces a linear order. -/
+/- The lemma used for `nonneg_total` is not yet proved. -/
+/-- The set of non-negative quasi-morphisms, as a 'total positive cone' (the
+convenient way to construct ordered additive groups). -/
 def GP : AddCommGroup.TotalPositiveCone (QuasiHom G) where
   nonneg := QuasiHom.nonneg
   zero_nonneg := QuasiHom.zero_nonneg
