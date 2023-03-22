@@ -99,12 +99,75 @@ lemma almost_comp_add (f : AlmostHom ℤ) (f₁ f₂ : AlmostHom G)
 /-- Left distributivity of composition with addition. -/
 lemma add_comp (f : AlmostHom G) (f₁ f₂ : AlmostHom ℤ)
     : (f₁ + f₂).comp f = f₁.comp f + f₂.comp f := by ext; rfl
-
-/-- If f₁ is bounded then f₁ ∘ f₂ is bounded. -/
+/-- If f₁ is bounded then f₁.comp f₂ is bounded. -/
 lemma bounded_comp (f₂ : AlmostHom G)
                    ⦃f₁ : AlmostHom ℤ⦄ (h : ∃ bound : ℕ, Bounded f₁ bound)
     : ∃ bound : ℕ, Bounded (f₁.comp f₂) bound :=
   let ⟨bound, h⟩ := h; ⟨bound, fun g => h (f₂ g)⟩
+
+/-- Composition of AlmostHoms f g is almost equal to (f n * g n)/n -/
+private lemma comp_almost_mul (f₁ f₂ : AlmostHom ℤ) 
+    : ∃ k, ∀ n, |n * (f₁.comp f₂ n) - f₂ n * f₁ n| ≤ (|n| + 1) * k := by
+  let ⟨a', b', hlin⟩ := linear_growth_upper_bound_int f₂
+  let ⟨b₁, hf₁⟩ := f₁.almostAdditive 
+  exact ⟨_, by
+    intro n
+    have hypcomm := AlmostAdditive.almost_smul_comm (hf₁) (f₂ n) n 1
+    specialize hlin n
+    simp only [smul_eq_mul, mul_one] at hypcomm
+    calc |n * (f₁.comp f₂ n) - f₂ n * f₁ n| 
+        ≤ b₁*(|f₂ n| + |n| + 2) := hypcomm
+      _ ≤ b₁*(a'*|n| + b' + |n| + 2) := 
+          by apply mul_le_mul_of_nonneg_left 
+              (by simp only [add_le_add_iff_right, hlin]) (zero_le _)
+      _ = b₁*(|n| * (a' + 1) + (b'+ 2)) := by ring
+      _ ≤ b₁*(|n| * (a' + 1) + (b'+ 2)) + b₁*(a'+1) := 
+          by simp only [le_add_iff_nonneg_right, zero_le]
+      _ ≤ b₁*(|n| * (a' + 1) + (b'+ 2)) + b₁*(a'+1) + b₁*(|n|)*(b'+2) := 
+          by simp only [le_add_iff_nonneg_right, zero_le]
+      _ = (|n|+1)*(b₁*(a'+1 + b'+2)) := by ring
+  ⟩
+
+lemma succ_le_two_mul (a : ℕ) (ha : a ≠ 0) : a+1 ≤ 2*a := by cases a; contradiction; apply Nat.succ_le.2; linarith [NeZero.pos]
+
+/-- Composition of AlmostHoms is commutative. -/
+lemma comp_almost_comm (f₁ f₂ : AlmostHom ℤ) 
+    : (f₁.comp f₂) - (f₂.comp f₁) ∈ boundedAlmostHoms ℤ := by
+  simp only [boundedAlmostHoms, Bounded, AddSubgroup.mem_mk, Set.mem_setOf_eq]
+  let ⟨k₁, hf₁⟩ := comp_almost_mul f₁ f₂
+  let ⟨k₂, hf₂⟩ := comp_almost_mul f₂ f₁
+  exact ⟨_, by 
+    intro n
+    have triag := Int.natAbs_add_le (n * (f₁.comp f₂ n) - f₂ n * f₁ n) (f₂ n * f₁ n - n * (f₂.comp f₁ n))
+    simp only [sub_add_sub_cancel, Int.diff_eq] at triag
+    if c: n = 0 
+    then 
+      simp only [c, zero_mul, zero_sub, Int.natAbs_neg, ge_iff_le] at hf₁ hf₂ |-
+      exact self_le_add_right |(f₁.comp f₂ - f₂.comp f₁) 0| (2*(k₁ + k₂))
+    else 
+    have goal_mul_n := 
+      calc 
+        |n| * |f₁.comp f₂ n - f₂.comp f₁ n|
+          = |n*f₁.comp f₂ n - n*f₂.comp f₁ n| := by rw [←Int.natAbs_mul, mul_sub_left_distrib]
+        _ ≤ |n*f₁.comp f₂ n - f₂ n * f₁ n| + |f₂ n * f₁ n - n*f₂.comp f₁ n| := triag
+        _ ≤ |n*f₁.comp f₂ n - f₂ n * f₁ n| + (|n|+1)*k₂  := 
+            by 
+              rw [mul_comm $ f₂ n, ←Int.natAbs_neg (f₁ n * f₂ n - n*f₂.comp f₁ n)]
+              apply Nat.add_le_add_left; 
+              simp only [neg_sub, Int.diff_eq]; exact hf₂ ..
+        _ ≤ (|n|+1)*k₁ + (|n|+1)*k₂ := Nat.add_le_add_right (hf₁ ..) ..
+        _ = (|n|+1)*(k₁ + k₂) := by ring
+        _ ≤ |n| * (2*(k₁ + k₂)) := 
+            by 
+              rw [←mul_assoc, mul_comm |n|]
+              exact Nat.mul_le_mul_of_nonneg_right 
+                <| succ_le_two_mul |n| 
+                <| Int.natAbs_ne_zero.2 c
+    calc |f₁.comp f₂ n - f₂.comp f₁ n| 
+      ≤ 2*(k₁ + k₂) := le_of_mul_le_mul_left goal_mul_n 
+        <| Or.resolve_left (Nat.eq_zero_or_pos ..) (Int.natAbs_ne_zero.2 c)
+    _ ≤ _ := self_le_add_left  (2*(k₁ + k₂)) |(f₁.comp f₂ - f₂.comp f₁) 0| ⟩
+
 
 end AlmostHom
 
@@ -192,8 +255,15 @@ private def exists_pair_ne : one ≠ ⟦⟨0, 0, fun _ _ => Nat.le_refl ..⟩⟧
   /- simp [funext] at this; -/ 
   sorry
 
-private def mul_comm (a b : QuasiHom ℤ) : smulHom a b = smulHom b a := 
-  sorry
+private def mul_comm (a b : QuasiHom ℤ) : smulHom a b = smulHom b a := by
+  apply QuotientAddGroup.induction_on a
+  apply QuotientAddGroup.induction_on b
+  intro a b
+  rw [smulHom]
+  apply (QuotientAddGroup.eq ..).2
+  rw [add_comm]
+  show a.comp b - b.comp a ∈ boundedAlmostHoms ℤ
+  exact AlmostHom.comp_almost_comm a b
 
 /- For some reason LSP is quite slow if it is allowed to work on this instance declaration.-/
 #exit
@@ -204,7 +274,7 @@ instance : Field (QuasiHom ℤ) :=
     left_distrib := by intros _ _ _;  apply AddMonoidHom.map_add
     right_distrib := right_distrib
       -- aesop? (add norm unfold [HMul.hMul, Mul.mul], norm simp AddMonoidHom.map_add, safe apply AddMonoidHom.add_apply)
-    mul_comm := sorry
+    mul_comm := mul_comm
     zero_mul  := zero_mul
     mul_zero  := mul_zero
     mul_assoc := mul_assoc

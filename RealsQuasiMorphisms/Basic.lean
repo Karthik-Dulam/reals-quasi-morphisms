@@ -148,7 +148,7 @@ lemma almost_smul : |f (m • g) - m * f g| ≤ bound * (|m| + 1) := by
 /- Second inequality proven in reference 1, generalised to arbitrary abelian groups. -/
 /-- A kind of commutativity of scaling by ℤ, with
 one scale factor before and another after applying a quasi-morphism. -/
-private lemma almost_smul_comm
+lemma almost_smul_comm
   : |n * f (m • g) - m * f (n • g)| ≤ bound * (|m| + |n| + 2) :=
   calc |n * f (m • g) - m * f (n • g)|
     ≤ |f ((m * n) • g) - n * f (m • g)| + |f ((m * n) • g) - m * f (n • g)|
@@ -164,7 +164,7 @@ private lemma almost_smul_comm
 
 /- `almost_smul_comm'` specialised to quasi-morphisms on integers and applied to 1.
 Eq (1) of reference 1. -/
-private lemma almost_smul_comm_int
+lemma almost_smul_comm_int
         ⦃f : ℤ → ℤ⦄ ⦃bound : ℕ⦄ (h : AlmostAdditive f bound) (m n : ℤ)
     : |n * f m - m * f n| ≤ bound * (|m| + |n| + 2) := by
   lax_exact h.almost_smul_comm m n 1 <;> rw [zsmul_int_one]
