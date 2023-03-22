@@ -12,11 +12,13 @@ variable {G : Type _} [AddCommGroup G]
 section Comp
 namespace AlmostAdditive
 
-/- Composing an AlmostHom G with an AlmostHom ℤ to give an AlmostHom ℤ-/
+/-- The composition of almost additive functions (on appropriate domains) is
+almost additive. -/
 protected theorem comp
-    ⦃f₁ : ℤ → ℤ⦄ ⦃bound₁ : ℕ⦄ (h₁ : AlmostAdditive f₁ bound₁)
-    ⦃f₂ : G → ℤ⦄ ⦃bound₂ : ℕ⦄ (h₂ : AlmostAdditive f₂ bound₂)
-  : AlmostAdditive (f₁ ∘ f₂) <| (bound₁ + |f₁ 1|) * bound₂ + bound₁ * 3 := fun x y =>
+        ⦃f₁ : ℤ → ℤ⦄ ⦃bound₁ : ℕ⦄ (h₁ : AlmostAdditive f₁ bound₁)
+        ⦃f₂ : G → ℤ⦄ ⦃bound₂ : ℕ⦄ (h₂ : AlmostAdditive f₂ bound₂)
+    : AlmostAdditive (f₁ ∘ f₂) <|
+        (bound₁ + |f₁ 1|) * bound₂ + bound₁ * 3 := fun x y =>
   calc |f₁ (f₂ (x + y)) - f₁ (f₂ x) - f₁ (f₂ y)|
     ≤ |f₁ (f₂ (x + y)) - f₁ (f₂ (x + y) - f₂ x - f₂ y) - f₁ (f₂ x + f₂ y)|
       + |f₁ (f₂ (x + y) - f₂ x - f₂ y)|
@@ -61,7 +63,8 @@ lemma comp_congr_right
                 have := Nat.mul_le_mul_left (bound + (f 1).natAbs) this
                 linarith [this]
 
-/-- Composition as product is almost distributive. -/
+/-- Composition of almost additive functions is distributive over addition on
+the right, up to a bounded function. -/
 lemma almost_comp_add
         ⦃f  : ℤ → ℤ⦄ ⦃bound : ℕ⦄ (h : AlmostAdditive f  bound)
         (f₁ f₂ : G → ℤ)
@@ -74,7 +77,8 @@ end AlmostAdditive
 
 namespace AlmostHom
 
-/-- Composition with a quasi-morphism on ℤ, returning another quasi-morphism. -/
+/-- Composition of almost-homomorphisms (with appropriate domains), returning
+another almost-homomorphism. -/
 protected def comp  (f₁ : AlmostHom ℤ) (f₂ : AlmostHom G) : AlmostHom G where
   toFun := f₁ ∘ f₂
   almostAdditive :=
@@ -96,7 +100,7 @@ lemma almost_comp_add (f : AlmostHom ℤ) (f₁ f₂ : AlmostHom G)
   let ⟨_, h⟩ := f.almostAdditive
   ⟨_, h.almost_comp_add f₁ f₂⟩
 
-/-- Left distributivity of composition with addition. -/
+/-- Left distributivity of composition over addition. -/
 lemma add_comp (f : AlmostHom G) (f₁ f₂ : AlmostHom ℤ)
     : (f₁ + f₂).comp f = f₁.comp f + f₂.comp f := by ext; rfl
 /-- If f₁ is bounded then f₁.comp f₂ is bounded. -/
@@ -211,7 +215,7 @@ end AlmostHom
 
 namespace QuasiHom
 
-/- The following 'helper lemmas' are for showing field structure.-/
+/- The following 'helper lemmas' are for showing field structure. -/
 
 private lemma right_distrib (a b c : QuasiHom ℤ) :
     smulHom (a + b) c = smulHom a c + smulHom b c := by
@@ -265,7 +269,7 @@ private def mul_comm (a b : QuasiHom ℤ) : smulHom a b = smulHom b a := by
   show a.comp b - b.comp a ∈ boundedAlmostHoms ℤ
   exact AlmostHom.comp_almost_comm a b
 
-/- For some reason LSP is quite slow if it is allowed to work on this instance declaration.-/
+/- For some reason LSP is quite slow if it is allowed to work on this instance declaration. -/
 #exit
 instance : Field (QuasiHom ℤ) :=
   let mul : Mul (QuasiHom ℤ) := ⟨ fun f g => smulHom f g ⟩

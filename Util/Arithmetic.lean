@@ -1,6 +1,6 @@
 import Mathlib.Data.Nat.Basic
 
-import Util.Tactics
+import Util.Meta.Tactics
 
 /-! Properties of `Int.natAbs` or otherwise useful for working with it. -/
 
