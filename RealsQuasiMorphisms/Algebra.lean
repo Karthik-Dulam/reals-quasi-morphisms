@@ -172,6 +172,52 @@ lemma comp_almost_comm (f₁ f₂ : AlmostHom ℤ)
         <| Or.resolve_left (Nat.eq_zero_or_pos ..) (Int.natAbs_ne_zero.2 c)
     _ ≤ _ := self_le_add_left  (2*(k₁ + k₂)) |(f₁.comp f₂ - f₂.comp f₁) 0| ⟩
 
+def non_zero (f : AlmostHom ℤ) : AlmostHom ℤ := 
+  ⟨fun n => if f n = 0 then 1 else f n, 
+    by 
+      let ⟨f,b,hf⟩ := f 
+      unfold AlmostAdditive at hf
+      exact ⟨2+b, 
+      by 
+        rw [AlmostAdditive]
+        intro g₁ g₂
+        split
+        case inl hg => 
+          by_cases c:f g₁ = 0 
+          <;> by_cases d:f g₂ = 0
+          <;> specialize hf g₁ g₂
+          <;> simp_all only [c, d, not_false_iff, sub_self, Int.natAbs_zero, zero_le, ite_true, ite_false, zero_sub, Int.natAbs_neg, Int.natAbs_one, le_add_iff_nonneg_right] 
+          · linarith -- TODO remove linarith
+          · exact le_add_left hf
+          · simp only [sub_sub_cancel_left, sub_zero] at hf |-; exact le_add_left hf
+          · rw [Int.sub_eq_add_neg, 
+                Int.sub_eq_add_neg, 
+                add_assoc,
+                ←Int.sub_eq_add_neg]
+            have := Int.natAbs_add_le 1 (-f g₁ - f g₂)
+            rw [Int.natAbs_one] at this
+            linarith
+        case inr hg => 
+          by_cases c:f g₁ = 0 
+          <;> by_cases d:f g₂ = 0
+          <;> specialize hf g₁ g₂
+          <;> simp_all only [sub_zero, ite_true, ite_false]
+          · have := Int.natAbs_add_le₃ (f (g₁ + g₂)) (-1) (-1)
+            rw [Int.sub_eq_add_neg, Int.sub_eq_add_neg]
+            simp_all only [Int.natAbs_neg, Int.natAbs_one, ge_iff_le]; linarith
+          · rw [Int.sub_eq_add_neg, 
+                Int.sub_eq_add_neg, 
+                add_assoc, add_comm (-1), 
+                ←add_assoc, 
+                ←@Int.sub_eq_add_neg _ (f g₂)]
+            have := Int.natAbs_add_le (f (g₁ + g₂) - f g₂) (-1)
+            rw [Int.natAbs_neg, Int.natAbs_one] at this
+            linarith
+          · rw [Int.sub_eq_add_neg]
+            have := Int.natAbs_add_le (f (g₁ + g₂) - f g₁) (-1)
+            rw [Int.natAbs_neg, Int.natAbs_one] at this
+            linarith
+          · linarith [hf ..]⟩⟩
 
 end AlmostHom
 
