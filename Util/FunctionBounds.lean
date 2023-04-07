@@ -46,6 +46,18 @@ lemma bddBelowBy_iff_upperBound_of_range
     : f.BddBelowBy b ↔ b ∈ lowerBounds (Set.range f) :=
   bddAboveBy_iff_upperBound_of_range (β := βᵒᵈ) ..
 
+variable {f s b}
+
+lemma bddAboveOnBy_of_bddAboveBy : f.BddAboveBy b → f.BddAboveOnBy s b :=
+ Set.ball_of_forall
+
+lemma bddBelowOnBy_of_bddBelowBy : f.BddBelowBy b → f.BddBelowOnBy s b :=
+ bddAboveOnBy_of_bddAboveBy (β := βᵒᵈ)
+
+lemma bddAboveOnBy_antimono {s₁ s₂} {b} (h : s₁ ⊆ s₂)
+    : f.BddAboveOnBy s₂ b → f.BddAboveOnBy s₁ b :=
+  Set.ball_mono h
+
 end SpecificBound
 
 end Relationships
