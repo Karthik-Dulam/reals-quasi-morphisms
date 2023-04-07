@@ -1,3 +1,6 @@
+import Mathlib.Tactic.Zify          -- for `zify` tactic
+import Mathlib.Data.Int.Order.Basic -- for `Int.coe_natAbs` lemma
+
 /-! # Basic notation/tactics specific to the integers. --/
 
 namespace Int.natAbs            -- restrict them to a namespace
@@ -18,5 +21,16 @@ Copied with modifications from https://github.com/leanprover/lean4/issues/2045#i
 private def unexpander : Lean.PrettyPrinter.Unexpander
 | `($_ $n:term) => `(|$n|)
 | _ => throw ()
+
+open Lean.Parser.Tactic (simpArgs location) in
+/-- Custom `zify` tactic which does not convert `Int.natAbs` to `abs`. -/
+scoped syntax (name := customZify_notation)
+  "custom_zify " (simpArgs)? (ppSpace location)? : tactic
+
+/-- Custom `zify` tactic which does not convert `Int.natAbs` to `Int.abs`. -/
+macro_rules (kind := customZify_notation)
+| `(tactic| custom_zify $[[$simpArgs,*]]? $[at $location]?) =>
+  `(tactic| zify $[[$simpArgs,*]]? $[at $location]?;
+            repeat rewrite [←Int.coe_natAbs] $[at $location]?)
 
 end Int.natAbs
