@@ -1,9 +1,11 @@
 import Mathlib.Algebra.Group.Basic
-import Mathlib.Tactic.Linarith
 import Mathlib.GroupTheory.Subgroup.Basic
 import Mathlib.GroupTheory.QuotientGroup
 
+import Mathlib.Tactic.Linarith
+
 import Util.Arithmetic
+import Util.FunctionBounds
 import Util.Meta.Tactics
 
 /-! Defines quasi-morphisms from an abelian group to ℤ and algebraic operations on them.
@@ -159,8 +161,7 @@ lemma almost_smul : |f (m • g) - m * f g| ≤ bound * (|m| + 1) := by
 /- Second inequality proven in reference 1, generalised to arbitrary abelian groups. -/
 /-- A kind of commutativity of scaling by ℤ for almost additive functions, with
 one scale factor before and another after applying the function. -/
--- private pending better choice of name
-lemma almost_smul_comm
+lemma almost_smul_interchange
     : |n * f (m • g) - m * f (n • g)| ≤ bound * (|m| + |n| + 2) :=
   calc |n * f (m • g) - m * f (n • g)|
     ≤ |f ((m * n) • g) - n * f (m • g)| + |f ((m * n) • g) - m * f (n • g)|
@@ -174,14 +175,13 @@ lemma almost_smul_comm
         := by apply Nat.add_le_add <;> apply h.almost_smul
   _ = bound * (|m| + |n| + 2) := by linarith
 
-/-- `almost_smul_comm` specialised to almost additive functions on ℤ applied to 1.
+/-- `almost_smul_interchange` specialised to almost additive functions on ℤ applied to 1.
 
 This is equation (1) in the first reference. -/
--- private pending better choice of name above
-private lemma almost_smul_comm_int
+lemma almost_smul_interchange_int
         ⦃f : ℤ → ℤ⦄ ⦃bound : ℕ⦄ (h : AlmostAdditive f bound) (m n : ℤ)
     : |n * f m - m * f n| ≤ bound * (|m| + |n| + 2) := by
-  lax_exact h.almost_smul_comm m n 1 <;> rw [zsmul_int_one]
+  lax_exact h.almost_smul_interchange m n 1 <;> rw [zsmul_int_one]
 
 /- The following lemmas are useful in bounding compositions of quasi-morphisms. -/
 
@@ -208,13 +208,13 @@ lemma linear_growth_lower_bound
   rewrite [tsub_mul, Nat.sub_sub, ←Nat.mul_succ]
   apply Nat.sub_le_of_le_add; rewrite [Nat.add_comm]
   calc |f g| * |n|
-      = |n * f g|                       := by rw [Nat.mul_comm, Int.natAbs_mul]
-    _ ≤ |n * f g - f (n • g)| + |f (n • g)|
-          := by lax_exact Int.natAbs_add_le (n * f g - f (n • g)) (f (n • g)); linarith
-    _ = |f (n • g) - n * f g| + |f (n • g)|
-          := by congr 1; rewrite [←Int.natAbs_neg]
-                congr 1; linarith
-    _ ≤ bound * (|n| + 1) + |f (n • g)| := by linarith [h.almost_smul n g]
+    = |n * f g|                       := by rw [Nat.mul_comm, Int.natAbs_mul]
+  _ ≤ |n * f g - f (n • g)| + |f (n • g)|
+        := by lax_exact Int.natAbs_add_le (n * f g - f (n • g)) (f (n • g)); linarith
+  _ = |f (n • g) - n * f g| + |f (n • g)|
+        := by congr 1; rewrite [←Int.natAbs_neg]
+              congr 1; linarith
+  _ ≤ bound * (|n| + 1) + |f (n • g)| := by linarith [h.almost_smul n g]
 
 /-- Lemma `linear_growth_lower_bound` specialised to functions on ℤ applied to 1. -/
 lemma linear_growth_lower_bound_int
@@ -241,7 +241,7 @@ macro_rules (kind := __existsBound)
 lemma almost_additive : bdd f (g₁ + g₂) - f g₁ - f g₂ for all (g₁ g₂ : G) :=
   local_wrapper almost_additive 0
 
-/- Not useful, since we end up not saying anything useful about what the bound is.
+/- Not useful, since we can't say anything useful about what the bound is.
 lemma almost_zero : bdd f 0 :=
   local_wrapper almost_zero 0
 -/
@@ -257,15 +257,14 @@ lemma almost_smul : bdd f (m • g) - m * f g for all (g : G) :=
 
 /-- A kind of commutativity of scaling by ℤ for almost-homomorphisms, with one
 scale factor before and another after applying the function. -/
--- private pending better name
-private lemma almost_smul_comm
+lemma almost_smul_interchange
     : bdd n * f (m • g) - m * f (n • g) for all (g : G) :=
-  local_wrapper almost_smul_comm 2
+  local_wrapper almost_smul_interchange 2
 
 /- Not useful, since we end up not saying anything useful about what the bound is.
-private lemma almost_smul_comm_int (f : AlmostHom ℤ) (m n : ℤ)
+lemma almost_smul_interchange_int (f : AlmostHom ℤ) (m n : ℤ)
     : bdd n * f m - m * f n :=
-  local_wrapper almost_smul_comm_int
+  local_wrapper almost_smul_interchange_int
 -/
 
 /-- An almost-homomorphism grows at most linearly (as a function of a scale factor
@@ -281,6 +280,8 @@ lemma linear_growth_upper_bound_int (f : AlmostHom ℤ)
   let ⟨_, h⟩ := f.almostAdditive
   ⟨_, _, h.linear_growth_upper_bound_int⟩
 
+/- Not useful, since we end up not saying anything useful about what the bound is.
+
 /-- An almost-homomorphism grows at least linearly (as a function of a scale factor
 applied to its argument). -/
 lemma linear_growth_lower_bound
@@ -293,6 +294,8 @@ lemma linear_growth_lower_bound_int (f : AlmostHom ℤ)
     : ∃ a b : ℕ, ∀ n : ℤ, a * |n| - b ≤ |f n| :=
   let ⟨_, h⟩ := f.almostAdditive
   ⟨_, _, h.linear_growth_lower_bound_int⟩
+
+-/
 
 end AlmostHom
 
@@ -336,7 +339,6 @@ protected def add : AlmostHom G where
   almostAdditive :=
     let ⟨_, h₁⟩ := f₁.almostAdditive
     let ⟨_, h₂⟩ := f₂.almostAdditive
-    -- bound is filled in based on the proof :)
     ⟨_, AlmostAdditive.add h₁ h₂⟩
 
 /-- Negation  of an almost-homomorphism. It is simply the pointwise negation. -/
@@ -364,6 +366,30 @@ section Quotient
 /-- `Bounded f` states that `f` is bounded over all arguments. -/
 def Bounded (f : G → ℤ) (bound : ℕ) := ∀ g : G, |f g| ≤ bound
 
+namespace Bounded
+
+lemma of_bddAbove_of_bddBelow {f : G → ℤ}
+        {boundᵤ : ℤ} (hᵤ : f.BddAboveBy boundᵤ)
+        {boundₗ : ℤ} (hₗ : f.BddBelowBy boundₗ)
+    : Bounded f (max |boundᵤ| |boundₗ|) := by
+  intro g
+  apply Int.natAbs_le <;> custom_zify
+  · calc f g ≤ boundᵤ           := hᵤ g
+           _ ≤ |boundᵤ|         := Int.le_natAbs
+           _ ≤ /- inferred -/ _ := le_max_left ..
+  · calc -f g ≤ -boundₗ          := Int.neg_le_neg <| hₗ g
+            _ ≤ |boundₗ|         := Int.neg_le_natAbs ..
+            _ ≤ /- inferred -/ _ := le_max_right ..
+
+lemma bddAbove {f : G → ℤ} {bound : ℕ} (h : Bounded f bound)
+    : f.BddAboveBy bound :=
+  fun g => Int.le_trans (f g).le_natAbs (by exact_mod_cast h g)
+
+lemma bddBelow {f : G → ℤ} {bound : ℕ} (h : Bounded f bound)
+    : f.BddBelowBy (-bound) :=
+  fun g => Int.neg_le_of_neg_le <|
+    Int.le_trans (f g).neg_le_natAbs (by exact_mod_cast h g)
+
 /- We don't really need this, but we might as well prove it. -/
 variable {f : G → ℤ} {bound : ℕ} in
 /-- A bounded function G → ℤ is almost additive. -/
@@ -374,10 +400,29 @@ lemma Bounded.almost_additive (h : Bounded f bound)
     _ ≤ bound * 3 := by linarith [(f g₁).natAbs_neg, (f g₂).natAbs_neg,
                                   h (g₁ + g₂), h g₁, h g₂]
 
+end Bounded
+
+def AlmostHom.Bounded (f : AlmostHom G) := Exists (_root_.Bounded f)
+
+namespace AlmostHom.Bounded
+
+lemma of_bddAbove_of_bddBelow (f : AlmostHom G)
+    : (⇑f).BddAbove → (⇑f).BddBelow → f.Bounded :=
+  fun ⟨_, hᵤ⟩ ⟨_, hₗ⟩ =>
+    ⟨_, _root_.Bounded.of_bddAbove_of_bddBelow hᵤ hₗ⟩
+
+lemma bddAbove {f : AlmostHom G} : f.Bounded → (⇑f).BddAbove :=
+  fun ⟨_bound, h⟩ => ⟨_, _root_.Bounded.bddAbove h⟩
+
+lemma bddBelow {f : AlmostHom G} : f.Bounded → (⇑f).BddBelow :=
+  fun ⟨_bound, h⟩ => ⟨_, _root_.Bounded.bddBelow h⟩
+
+end AlmostHom.Bounded
+
 variable (G) in
 /-- The subgroup of `AlmostHom G` consisting of bounded quasi-morphisms. -/
 def boundedAlmostHoms : AddSubgroup (AlmostHom G) where
-  carrier := {f | ∃ bound : ℕ, Bounded f bound}
+  carrier := setOf AlmostHom.Bounded
   add_mem' {f₁ f₂} := fun ⟨bound₁, h₁⟩ ⟨bound₂, h₂⟩ => .intro _ fun g =>
     calc |f₁ g + f₂ g| ≤ |f₁ g| + |f₂ g| := Int.natAbs_add_le ..
                      _ ≤ bound₁ + bound₂ := Nat.add_le_add (h₁ g) (h₂ g)

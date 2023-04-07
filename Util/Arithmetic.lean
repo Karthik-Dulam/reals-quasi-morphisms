@@ -1,17 +1,21 @@
 import Mathlib.Data.Nat.Basic
 
-import Util.Meta.Tactics
+import Util.Arithmetic.Meta
 
-/-! Properties of `Int.natAbs` or otherwise useful for working with it. -/
+/-! # Useful facts in integer arithmetic -/
 
 -- TODO question namespace choices
 
-/- `linarith` is powerful, but generates huge proof terms with all
+/- Note:
+
+`linarith` is powerful, but generates huge proof terms with all
 kinds of stuff in them.
 
 In another construction this caused a mysterious error, so I'm
 avoiding `linarith` for simple proofs where it's unnecessary and not
 especially convenient. -/
+
+/-! ## Some convenient but missing identities about integers -/
 
 section Identities
 namespace Int
@@ -66,35 +70,16 @@ end
 end NatIneqs
 
 
-/-! # Absolute value notation for convenience -/
-namespace Int.natAbs            -- scoped to this namespace
-
-/- This conflicts with match-case notation. -/
--- 	local notation (priority := high) "|" x "|" => Int.natAbs x
-/- This is copied with modifications from Mathlib.Algebra.Abs. -/
-/- Splitting into `syntax` and `macro_rules` seems to be necessary to use `local`. -/
-scoped syntax:arg (name := __notation) (priority := default+1)
-  atomic("|" noWs) term:min noWs "|" : term
-scoped macro_rules (kind := __notation)
-  | `(|$x:term|) => `(Int.natAbs $x)
-
-/- This should make the pretty printer use this notation.
-Copied with modifications from https://github.com/leanprover/lean4/issues/2045#issuecomment-1396168913. -/
-@[scoped app_unexpander Int.natAbs]
-private def __unexpander : Lean.PrettyPrinter.Unexpander
-| `($(_) $n:term) => `(|$n|)
-| _ => throw ()
-
-end Int.natAbs
-
-
-abbrev Int.diff : ℤ → ℤ → ℕ := (· - · |>.natAbs)
-
--- Lemmas about Int.natAbs and Int.diff
+/-! ## Lemmas about `Int.natAbs` -/
 namespace Int
 variable (a b c d : ℤ)
 
 open scoped Int.natAbs
+
+lemma natAbs_eq' : |a| = a ∨ |a| = -a := by
+  conv => lhs; rewrite [eq_comm]
+  conv => rhs; rewrite [eq_comm, Int.neg_eq_comm, eq_comm]
+  exact natAbs_eq a
 
 lemma natAbs_add_le₃ : |a + b + c| ≤ |a| + |b| + |c| :=
   /- `by linarith [Int.natAbs_add_le (a + b) c, Int.natAbs_add_le a b]`
@@ -109,6 +94,33 @@ lemma natAbs_add_le₄
   Nat.le_trans_le_sum_left (Int.natAbs_add_le (a + b + c) d)
                            (Int.natAbs_add_le₃ a b c)
 
+lemma neg_le_natAbs : -a ≤ |a| := natAbs_neg a ▸ (-a).le_natAbs
+
+lemma natAbs_le' {a b : ℤ} (h₁ : a ≤ b) (h₂ : -a ≤ b) : |a| ≤ b := by
+  apply Int.natAbs_eq' a |>.elim <;> (intro h; rwa [h])
+
+lemma natAbs_le {a : ℤ} {b : ℕ} : a ≤ b → -a ≤ b → |a| ≤ b :=
+  by exact_mod_cast @natAbs_le' a b
+
+lemma natAbs_le_iff' : |a| ≤ b ↔ a ≤ b ∧ -a ≤ b :=
+  ⟨fun h => ⟨Int.le_trans a.le_natAbs h,
+             Int.le_trans a.neg_le_natAbs h⟩,
+   And.elim natAbs_le'⟩
+
+lemma natAbs_le_iff (b : ℕ) : |a| ≤ b ↔ a ≤ b ∧ -a ≤ b :=
+  by exact_mod_cast natAbs_le_iff' a b
+
+lemma nonneg_iff_zero_le : a.NonNeg ↔ 0 ≤ a :=
+  show a.NonNeg ↔ (a - 0).NonNeg from
+  (Int.sub_zero a).symm ▸ Iff.refl a.NonNeg
+
+lemma natAbs_eq_max_self_neg : |a| = max a (-a) :=
+  Int.le_antisymm
+    (natAbs_le' (Int.le_max_left ..) (Int.le_max_right ..))
+    (max_le (Int.le_natAbs ..) (Int.neg_le_natAbs ..))
+
+/-- The difference of two integers. -/
+abbrev diff : ℤ → ℤ → ℕ := (· - · |>.natAbs)
 
 @[simp] lemma diff_eq : a.diff b = |a - b| := rfl
 

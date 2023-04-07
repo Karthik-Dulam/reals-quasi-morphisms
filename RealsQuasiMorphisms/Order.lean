@@ -1,140 +1,83 @@
+import Util.FunctionBounds
 import RealsQuasiMorphisms.Basic
-import Mathlib.Algebra.Order.Field.Defs
 import Mathlib.Algebra.Order.Ring.Cone
 
+import Mathlib.Tactic.Abel
 
-variable {G : Type _} [OrderedAddCommGroup G]
+import Util.Logic
+import Util.Arithmetic
+import Util.FunctionBounds
+
+open scoped Int.natAbs
+
+variable {G : Type _}
+
+section PartialOrder variable [OrderedAddCommGroup G]
 
 namespace AlmostHom
 
-/-- An almost-homomorphism `f : G → ℤ` is non-negative if the image (under `f`) of `G ≥ 0` is bounded below. -/
-protected def nonneg (f : AlmostHom G) : Prop := ∃ a : ℤ , ∀ x : G, x ≥ 0 → f x ≥ a
-/-- An almost-homomorphism `f : G → ℤ` is non-positive if the image (under `f`) of `G ≥ 0` is bounded above (unused). -/
-protected def nonpos (f : AlmostHom G) : Prop := ∃ b : ℤ , ∀ x : G, x ≥ 0 → f x ≤ b
-/-- `f ≤ g` is equivalent to stating `g - f` is non-negative. -/
-protected def le (f g : AlmostHom G) : Prop := AlmostHom.nonneg (g - f)
+/-- `f` is non-negative if the image under it of `{g : G | g ≥ 0}` is bounded below. -/
+protected def NonNeg (f : AlmostHom G) : Prop :=
+  ∃ bound : ℤ , ∀ {g : G}, g ≥ 0 → f g ≥ bound
 
+/- protected def NonPos (f : AlmostHom G) : Prop := (-f).NonNeg -/
 
--- why exactly this is needed is well beyond me
-private lemma add_reduces_to_fun (f g : AlmostHom G) : toFun (f + g) = toFun f + toFun g := by rfl
-private lemma neg_reduces_to_fun (f : AlmostHom G) : toFun (-f) = - toFun f:= by rfl
-private lemma sub_reduces_to_fun (f g : AlmostHom G) : toFun (f - g) = toFun f - toFun g := by rfl
+variable {f : AlmostHom G}
 
+section NonNegBasicLemmas
 
-/-- `AlmostHom.le` as defined  gives us a preorder on `AlmostHom G`. -/
-instance : Preorder (AlmostHom G) where
-  le := AlmostHom.le
-  le_refl f := by
-                simp only [AlmostHom.le, AlmostHom.nonneg, sub_self]
-                use -1; intro x _
-                show -1 ≤ 0; simp only [Left.neg_nonpos_iff]
-  le_trans p q r:= by
-                    intro hpq hqr
-                    let ⟨a, hpq⟩ := hpq; let ⟨b, hqr⟩ := hqr
-                    use a+b; intro x hx
-                    simp only [sub_reduces_to_fun, Pi.sub_apply, ge_iff_le] at hpq hqr ⊢ 
-                    let h := add_le_add (hpq x hx) (hqr x hx)
-                    rw [sub_add_sub_cancel'] at h
-                    apply h
+/-- A non-negative `AlmostHom` is bounded below on {g | g ≥ 0}. -/
+lemma bddBelow_on_nonneg_of_nonneg
+    : f.NonNeg → (⇑f).BddBelowOn (Set.Ici 0) :=
+  id
 
+/-- A non-negative `AlmostHom` is bounded above on {g | g ≤ 0}. -/
+lemma bddAbove_on_nonpos_of_nonneg
+    : f.NonNeg → (⇑f).BddAboveOn (Set.Iic 0) :=
+  let ⟨bound', hₐ⟩ := f.almost_neg
+  Exists.imp'' fun {bound} h {g} h_g =>
+      show f g ≤ bound' - bound by
+      have : f g - -f (-g) ≤ bound' := by
+        -- add |·| to LHS and lift goal to ℕ
+        apply Int.le_trans (Int.le_natAbs ..); apply Int.ofNat_le.mpr
+        rewrite [show f g - -f (-g) = f (-g) - -f g by abel]; exact hₐ g
+      linarith [this, h (neg_nonneg_of_nonpos h_g)]
 
-/- Adding a bounded function to any other can only change the image of
-any element by at most some bound. Thus any lower bound is preserved
-up to a shift in the bound. -/
-private lemma bounded_plus_nonneg_nonneg' (f : AlmostHom G)
-        ⦃g : AlmostHom G⦄ (h : ∃ bound : ℕ, Bounded g bound)
-    : f.nonneg → (f + g).nonneg := by
-  intro hf
-  let ⟨bound, hb⟩ := h
-  rw [Bounded] at hb
-  let ⟨a, ha⟩ := hf
-  use a - bound; intro x hx
-  have hb : -bound ≤ g.toFun x := by
-    simp only [←Int.ofNat_le, Int.coe_natAbs, abs_le] at hb
-    exact (hb x).left
-  exact add_le_add (ha x hx) hb
+/-- An `AlmostHom` whose negative is non-negative is bounded above on {g | g ≥ 0}. -/
+lemma bddAbove_on_nonneg_of_nonpos
+    : (-f).NonNeg → (⇑f).BddAboveOn (Set.Ici 0) :=
+  Exists.imp'' (Int.le_neg_of_le_neg ∘ ·)
 
-/-- If `f` is a non-negative almost-homomorphism and `g` is bounded, then `f + g` is non-negative. -/
-protected theorem bounded_plus_nonneg_nonneg {f : AlmostHom G} (g : boundedAlmostHoms G)
-    : f.nonneg → (f + g).nonneg := by
-  exact AlmostHom.bounded_plus_nonneg_nonneg' f g.property
+/-- An `AlmostHom` whose negative is non-negative is bounded below on {g | g ≤ 0}. -/
+lemma bddBelow_on_nonpos_of_nonpos
+    : (-f).NonNeg → (⇑f).BddBelowOn (Set.Iic 0) :=
+  -- No idea why by exact is needed here; probably helps infer something.
+  Exists.imp'' (by exact Int.neg_le_of_neg_le ∘ ·) ∘ bddAbove_on_nonpos_of_nonneg
 
-/-- The almost-homomorphism 0 is non-negative. -/
-protected lemma zero_nonneg : (0 : AlmostHom G).nonneg := by
-  use -1; intro x _
-  show -1 ≤ 0; simp only [Left.neg_nonpos_iff]
+end NonNegBasicLemmas
 
-/-- If `f` and `g` are non-negative almost-homomorphisms then `f + g` is also non-negative. -/
-protected lemma add_nonneg {f g : AlmostHom G} : f.nonneg → g.nonneg → (f + g).nonneg := by
-  intro hf hg
-  let ⟨a, ha⟩ := hf; let ⟨b, hb⟩ := hg
-  use a + b; intro x hx
-  exact add_le_add (ha x hx) (hb x hx)
+/-- The sum of non-negative `AlmostHom`s is non-negative. -/
+protected lemma add_nonneg {f₁ f₂ : AlmostHom G}
+    : f₁.NonNeg → f₂.NonNeg → (f₁ + f₂).NonNeg :=
+  fun ⟨bound₁, h₁⟩ ⟨bound₂, h₂⟩ =>
+    ⟨bound₁ + bound₂, fun h => Int.add_le_add (h₁ h) (h₂ h)⟩
 
--- this might exist somewhere already
-private lemma neg_natAbs_le (a : ℤ) : -a.natAbs ≤ a := by
-  simp only [←Int.ofNat_le, Int.coe_natAbs]
-  exact neg_abs_le_self a
+/-- A bounded `AlmostHom` is non-negative. -/
+lemma Bounded.nonneg : f.Bounded → f.NonNeg :=
+  (·.bddBelow.imp <| fun _ => Set.ball_of_forall)
 
-private lemma neg_le_natAbs (a : ℤ) : -a ≤ a.natAbs := by
-  simp only [←Int.ofNat_le, Int.coe_natAbs]
-  exact neg_le_abs_self a
-
-
--- this really need not be split up like this
-private lemma nonneg_and_neg_nonneg_bounded' {f : AlmostHom G}
-    : f.nonneg → (-f).nonneg → (∃ bound : ℕ, Bounded f bound) := by
-  intro hf hf'
-  let ⟨a, ha⟩ := hf; let ⟨b, hb⟩ := hf'
-  let ⟨bound, hf⟩ := f.almostAdditive
-  let y := f 0
-  let nb := a.natAbs + b.natAbs + bound + y.natAbs
-  use nb
-  rw [Bounded]
-  intro x
-  by_cases hx:(x ≥ 0)
-  · have h' : f x ≤ -b := by
-      rw [le_neg]
-      exact hb x hx
-    let h'' := ha x hx
-    simp only [←Int.ofNat_le, Int.coe_natAbs, abs_le]
-    apply And.intro
-    · have hga : a.natAbs ≤ nb := by
-        simp only [add_assoc, le_add_iff_nonneg_right, zero_le]
-      have hga : -nb ≤ -(↑a.natAbs : ℤ) := by
-        simp only [←Int.ofNat_le] at hga
-        simp only [neg_le_neg, hga]
-      linarith [neg_natAbs_le a]
-    · have hgb : Int.natAbs b ≤ Int.natAbs b + Int.natAbs a + bound + Int.natAbs (toFun f 0) := by
-        simp only [add_assoc, le_add_iff_nonneg_right, zero_le]
-      simp only [←Int.ofNat_le] at hgb
-      have nbe : ↑(Int.natAbs b + Int.natAbs a + bound + Int.natAbs (toFun f 0)) = (↑nb : ℤ)  := by
-        simp only [add_comm, Nat.cast_add, Int.coe_natAbs]
-      linarith [neg_natAbs_le b]
-  · sorry
-
-/-- If `f` is an almost-homomorphism such that both `f` and `-f` are non-negative, then `f` is bounded. -/
-protected lemma nonneg_and_neg_nonneg_bounded {f : AlmostHom G}
-    : f.nonneg → (-f).nonneg → f ∈ boundedAlmostHoms G := by
-  intro hf hf'
-  let ⟨bound, hb⟩ := nonneg_and_neg_nonneg_bounded' (f := f) hf hf'
-  use bound
-  exact hb
-
-/- This is a somewhat non-trivial result and not proven yet. -/
-/-- If `f` is an almost-homomorphism, then at least one of `f` and `-f` must be non-negative. -/
-protected lemma nonneg_total (f : AlmostHom G) : f.nonneg ∨ (-f).nonneg := by
-  sorry
+/-- The negative of a bounded `AlmostHom` is non-negative. -/
+lemma Bounded.nonpos : f.Bounded → (-f).NonNeg :=
+  Bounded.nonneg ∘ (boundedAlmostHoms G).neg_mem'
 
 end AlmostHom
-
-
+#exit
 namespace QuasiHom
 
 /-- A quasi-morphism `f` is non-negative if any representative almost-homomorphism is non-negative.
 
 This is well-defined by `bounded_plus_nonneg_nonneg`. -/
-protected def nonneg (f : QuasiHom G) : Prop := Quot.liftOn f AlmostHom.nonneg (λ f g h ↦ by
+protected def nonneg (f : QuasiHom G) : Prop := Quot.liftOn f AlmostHom.NonNeg (λ f g h ↦ by
   rw [QuotientAddGroup.leftRel_apply] at h
   let x : boundedAlmostHoms G := ⟨-f + g, h⟩
   have h₁ : g = f + x := by
@@ -145,30 +88,61 @@ protected def nonneg (f : QuasiHom G) : Prop := Quot.liftOn f AlmostHom.nonneg (
   apply Iff.intro
   · intro hf
     rw [h₁]
-    apply AlmostHom.bounded_plus_nonneg_nonneg x hf
+    sorry -- apply AlmostHom.bounded_plus_nonneg_nonneg x hf
   · intro hg
     rw [h₂]
-    apply AlmostHom.bounded_plus_nonneg_nonneg (-x) hg
+    sorry -- apply AlmostHom.bounded_plus_nonneg_nonneg (-x) hg
   )
 
+end QuasiHom
 
-/-- The quasi-morphism 0 is non-negative. -/
-protected lemma zero_nonneg : QuasiHom.nonneg (0 : QuasiHom G) := by
-  apply AlmostHom.zero_nonneg
+end PartialOrder
+section LinearOrder
+variable [LinearOrderedAddCommGroup G] {f f₁ f₂ : AlmostHom G}
 
-/-- The sum of two non-negative quasi-morphisms is non-negative. -/
-protected lemma add_nonneg {f g : QuasiHom G} : f.nonneg → g.nonneg → (f + g).nonneg := by
-  apply QuotientAddGroup.induction_on f
-  apply QuotientAddGroup.induction_on g
-  intro f g hf hg
-  apply AlmostHom.add_nonneg hf hg
+namespace AlmostHom
+
+lemma bounded_of_nonneg_of_nonpos (h₁ : f.NonNeg) (h₂ : (-f).NonNeg)
+    : f.Bounded :=
+  let ⟨bound₁, h₁'⟩ := bddAbove_on_nonneg_of_nonpos h₂
+  let ⟨bound₂, h₂'⟩ := bddAbove_on_nonneg_of_nonpos <| (neg_neg f).symm ▸ h₁
+  let ⟨bound₃, h₃'⟩ := bddAbove_on_nonpos_of_nonneg h₁
+  let ⟨bound₄, h₄'⟩ := bddAbove_on_nonpos_of_nonneg h₂
+  ⟨max (max bound₁ bound₂) (max bound₃ bound₄) |>.toNat, fun g => by
+     custom_zify
+     refine Int.le_trans ?_ (Int.self_le_toNat ..) -- remove `toNat`from RHS
+     cases le_total 0 g
+     case' inl h_ge =>
+       specialize h₁' h_ge; specialize h₂' h_ge
+       refine Int.le_trans ?_ (Int.le_max_left ..)
+     case' inr h_le =>
+       specialize h₃' h_le; specialize h₄' h_le
+       refine Int.le_trans ?_ (Int.le_max_right ..)
+     all_goals apply Int.natAbs_le' <;>
+       (apply Int.le_trans (by assumption)
+        solve| apply Int.le_max_left | apply Int.le_max_right)⟩
+
+/-- For an `AlmostHom` f, both f and -f are `NonNeg` iff f is bounded.  -/
+lemma nonneg_and_nonpos_iff_bounded (f : AlmostHom G)
+    : f.NonNeg ∧ (-f).NonNeg ↔ f.Bounded :=
+  ⟨And.elim bounded_of_nonneg_of_nonpos,
+   fun h => ⟨h.nonneg, h.nonpos⟩⟩
+
+/- This is a somewhat non-trivial result and not proven yet. -/
+/-- If `f` is an almost-homomorphism, then at least one of `f` and `-f` must be non-negative. -/
+protected lemma nonneg_total (f : AlmostHom G) : f.NonNeg ∨ (-f).NonNeg := by
+  sorry
+
+end AlmostHom
+
+namespace QuasiHom
 
 /-- If `f` and `-f` are both non-negative quasi-morphisms, then `f` must be `0`. -/
 protected lemma nonneg_antisymm {f : QuasiHom G} : f.nonneg → (-f).nonneg → f = 0 := by
   apply QuotientAddGroup.induction_on f
   intro f hf hf'
   rw [QuotientAddGroup.eq_zero_iff]
-  exact AlmostHom.nonneg_and_neg_nonneg_bounded hf hf'
+  exact AlmostHom.bounded_of_nonneg_of_nonpos hf hf'
 
 /- This depends on the corresponding result for almost-homomorphisms, which is not yet proved. -/
 /-- If `f` is a quasi-morphism, then at least one of `f` and `-f` must be non-negative. -/
@@ -211,3 +185,5 @@ noncomputable def GP : AddCommGroup.TotalPositiveCone (QuasiHom G) where
   
 
 end QuasiHom
+
+end LinearOrder
