@@ -366,7 +366,9 @@ section Quotient
 /-- `Bounded f` states that `f` is bounded over all arguments. -/
 def Bounded (f : G → ℤ) (bound : ℕ) := ∀ g : G, |f g| ≤ bound
 
-theorem bounded_of_bddAbove_of_bddBelow {f : G → ℤ}
+namespace Bounded
+
+lemma of_bddAbove_of_bddBelow {f : G → ℤ}
         {boundᵤ : ℤ} (hᵤ : f.BddAboveBy boundᵤ)
         {boundₗ : ℤ} (hₗ : f.BddBelowBy boundₗ)
     : Bounded f (max |boundᵤ| |boundₗ|) := by
@@ -379,6 +381,15 @@ theorem bounded_of_bddAbove_of_bddBelow {f : G → ℤ}
             _ ≤ |boundₗ|         := Int.neg_le_natAbs ..
             _ ≤ /- inferred -/ _ := le_max_right ..
 
+lemma bddAbove {f : G → ℤ} {bound : ℕ} (h : Bounded f bound)
+    : f.BddAboveBy bound :=
+  fun g => Int.le_trans (f g).le_natAbs (by exact_mod_cast h g)
+
+lemma bddBelow {f : G → ℤ} {bound : ℕ} (h : Bounded f bound)
+    : f.BddBelowBy (-bound) :=
+  fun g => Int.neg_le_of_neg_le <|
+    Int.le_trans (f g).neg_le_natAbs (by exact_mod_cast h g)
+
 /- We don't really need this, but we might as well prove it. -/
 variable {f : G → ℤ} {bound : ℕ} in
 /-- A bounded function G → ℤ is almost additive. -/
@@ -389,12 +400,24 @@ lemma Bounded.almost_additive (h : Bounded f bound)
     _ ≤ bound * 3 := by linarith [(f g₁).natAbs_neg, (f g₂).natAbs_neg,
                                   h (g₁ + g₂), h g₁, h g₂]
 
+end Bounded
+
 def AlmostHom.Bounded (f : AlmostHom G) := Exists (_root_.Bounded f)
 
-theorem AlmostHom.bounded_of_bddAbove_of_bddBelow (f : AlmostHom G)
+namespace AlmostHom.Bounded
+
+lemma of_bddAbove_of_bddBelow (f : AlmostHom G)
     : (⇑f).BddAbove → (⇑f).BddBelow → f.Bounded :=
   fun ⟨_, hᵤ⟩ ⟨_, hₗ⟩ =>
-    ⟨_, _root_.bounded_of_bddAbove_of_bddBelow hᵤ hₗ⟩
+    ⟨_, _root_.Bounded.of_bddAbove_of_bddBelow hᵤ hₗ⟩
+
+lemma bddAbove {f : AlmostHom G} : f.Bounded → (⇑f).BddAbove :=
+  fun ⟨_bound, h⟩ => ⟨_, _root_.Bounded.bddAbove h⟩
+
+lemma bddBelow {f : AlmostHom G} : f.Bounded → (⇑f).BddBelow :=
+  fun ⟨_bound, h⟩ => ⟨_, _root_.Bounded.bddBelow h⟩
+
+end AlmostHom.Bounded
 
 variable (G) in
 /-- The subgroup of `AlmostHom G` consisting of bounded quasi-morphisms. -/
