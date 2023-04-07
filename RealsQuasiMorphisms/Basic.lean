@@ -1,9 +1,11 @@
 import Mathlib.Algebra.Group.Basic
-import Mathlib.Tactic.Linarith
 import Mathlib.GroupTheory.Subgroup.Basic
 import Mathlib.GroupTheory.QuotientGroup
 
+import Mathlib.Tactic.Linarith
+
 import Util.Arithmetic
+import Util.FunctionBounds
 import Util.Meta.Tactics
 
 /-! Defines quasi-morphisms from an abelian group to ℤ and algebraic operations on them.
@@ -364,6 +366,19 @@ section Quotient
 /-- `Bounded f` states that `f` is bounded over all arguments. -/
 def Bounded (f : G → ℤ) (bound : ℕ) := ∀ g : G, |f g| ≤ bound
 
+theorem bounded_of_bddAbove_of_bddBelow {f : G → ℤ}
+        {boundᵤ : ℤ} (hᵤ : f.BddAboveBy boundᵤ)
+        {boundₗ : ℤ} (hₗ : f.BddBelowBy boundₗ)
+    : Bounded f (max |boundᵤ| |boundₗ|) := by
+  intro g
+  apply Int.natAbs_le <;> custom_zify
+  · calc f g ≤ boundᵤ           := hᵤ g
+           _ ≤ |boundᵤ|         := Int.le_natAbs
+           _ ≤ /- inferred -/ _ := le_max_left ..
+  · calc -f g ≤ -boundₗ          := Int.neg_le_neg <| hₗ g
+            _ ≤ |boundₗ|         := Int.neg_le_natAbs ..
+            _ ≤ /- inferred -/ _ := le_max_right ..
+
 /- We don't really need this, but we might as well prove it. -/
 variable {f : G → ℤ} {bound : ℕ} in
 /-- A bounded function G → ℤ is almost additive. -/
@@ -374,10 +389,17 @@ lemma Bounded.almost_additive (h : Bounded f bound)
     _ ≤ bound * 3 := by linarith [(f g₁).natAbs_neg, (f g₂).natAbs_neg,
                                   h (g₁ + g₂), h g₁, h g₂]
 
+def AlmostHom.Bounded (f : AlmostHom G) := Exists (_root_.Bounded f)
+
+theorem AlmostHom.bounded_of_bddAbove_of_bddBelow (f : AlmostHom G)
+    : (⇑f).BddAbove → (⇑f).BddBelow → f.Bounded :=
+  fun ⟨_, hᵤ⟩ ⟨_, hₗ⟩ =>
+    ⟨_, _root_.bounded_of_bddAbove_of_bddBelow hᵤ hₗ⟩
+
 variable (G) in
 /-- The subgroup of `AlmostHom G` consisting of bounded quasi-morphisms. -/
 def boundedAlmostHoms : AddSubgroup (AlmostHom G) where
-  carrier := {f | ∃ bound : ℕ, Bounded f bound}
+  carrier := setOf AlmostHom.Bounded
   add_mem' {f₁ f₂} := fun ⟨bound₁, h₁⟩ ⟨bound₂, h₂⟩ => .intro _ fun g =>
     calc |f₁ g + f₂ g| ≤ |f₁ g| + |f₂ g| := Int.natAbs_add_le ..
                      _ ≤ bound₁ + bound₂ := Nat.add_le_add (h₁ g) (h₂ g)
