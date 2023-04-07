@@ -1,8 +1,8 @@
 /-- `try_solve t` either solves the goal using `t` or does not change the proof state. -/
-macro "try_solve " t:tacticSeq : tactic =>
-  `(tactic| first | (solve | $t) | skip)
+macro (name := Lean.Parser.Tactic.trySolve)
+  "try_solve " t:tacticSeq : tactic => `(tactic| try solve| $t)
 
--- example : True ∨ False := by (try_solve apply Or.inr); trivial
+namespace Lean.Parser.Tactic
 
 /-- `lax_exact h` completes the goal using `h`, adding a subgoal to
 rewrite the goal to the type of `h`.
@@ -19,9 +19,11 @@ macro "lax_exact " t:term : tactic =>
 
 As a result, it is currently useless (see end of docstring of `lax_exact`). -/
 -- In fact, currently, it _is_ the same.
-macro "lax_apply" t:term : tactic =>
+macro "lax_apply " t:term : tactic =>
   `(tactic| lax_exact $t ..)
 
 /- example (a b : Nat) : a + b - b ≤ a + b := by
   lax_exact Nat.le_add_right a b
   apply Nat.add_sub_cancel -/
+
+end Lean.Parser.Tactic
