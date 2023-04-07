@@ -66,13 +66,16 @@ end
 end NatIneqs
 
 
-abbrev Int.diff : ℤ → ℤ → ℕ := (· - · |>.natAbs)
-
 -- Lemmas about Int.natAbs and Int.diff
 namespace Int
 variable (a b c d : ℤ)
 
 open scoped Int.natAbs
+
+lemma natAbs_eq' : |a| = a ∨ |a| = -a := by
+  conv => lhs; rewrite [eq_comm]
+  conv => rhs; rewrite [eq_comm, Int.neg_eq_comm, eq_comm]
+  exact natAbs_eq a
 
 lemma natAbs_add_le₃ : |a + b + c| ≤ |a| + |b| + |c| :=
   /- `by linarith [Int.natAbs_add_le (a + b) c, Int.natAbs_add_le a b]`
@@ -87,6 +90,33 @@ lemma natAbs_add_le₄
   Nat.le_trans_le_sum_left (Int.natAbs_add_le (a + b + c) d)
                            (Int.natAbs_add_le₃ a b c)
 
+lemma neg_le_natAbs : -a ≤ |a| := natAbs_neg a ▸ (-a).le_natAbs
+
+lemma natAbs_le' {a b : ℤ} (h₁ : a ≤ b) (h₂ : -a ≤ b) : |a| ≤ b := by
+  apply Int.natAbs_eq' a |>.elim <;> (intro h; rwa [h])
+
+lemma natAbs_le {a : ℤ} {b : ℕ} : a ≤ b → -a ≤ b → |a| ≤ b :=
+  by exact_mod_cast @natAbs_le' a b
+
+lemma natAbs_le_iff' : |a| ≤ b ↔ a ≤ b ∧ -a ≤ b :=
+  ⟨fun h => ⟨Int.le_trans a.le_natAbs h,
+             Int.le_trans a.neg_le_natAbs h⟩,
+   And.elim natAbs_le'⟩
+
+lemma natAbs_le_iff (b : ℕ) : |a| ≤ b ↔ a ≤ b ∧ -a ≤ b :=
+  by exact_mod_cast natAbs_le_iff' a b
+
+lemma nonneg_iff_zero_le : a.NonNeg ↔ 0 ≤ a :=
+  show a.NonNeg ↔ (a - 0).NonNeg from
+  (Int.sub_zero a).symm ▸ Iff.refl a.NonNeg
+
+lemma natAbs_eq_max_self_neg : |a| = max a (-a) :=
+  Int.le_antisymm
+    (natAbs_le' (Int.le_max_left ..) (Int.le_max_right ..))
+    (max_le (Int.le_natAbs ..) (Int.neg_le_natAbs ..))
+
+/-- The difference of two integers. -/
+abbrev diff : ℤ → ℤ → ℕ := (· - · |>.natAbs)
 
 @[simp] lemma diff_eq : a.diff b = |a - b| := rfl
 
