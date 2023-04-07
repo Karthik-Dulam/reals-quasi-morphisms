@@ -99,8 +99,8 @@ lemma almost_additive : ∀ g₁ g₂ : G, |f (g₁ + g₂) - f g₁ - f g₂| �
 
 /-- An almost additive function `f` maps 0 to 0, up to an error at most the bound. -/
 lemma almost_zero : |f 0| ≤ bound := -- by simpa using h.almost_additive 0 0
-  calc |f 0| = |f (0+0) - f 0 - f 0| := by rewrite [←Int.natAbs_neg]; congr 1
-                                           rewrite [add_zero]; linarith
+  calc |f 0| = |f (0+0) - f 0 - f 0| := by rw [←Int.natAbs_neg, add_zero,
+                                               sub_self, zero_sub]
          _ ≤ bound                 := h.almost_additive 0 0
 
 /-- An almost additive function `f` respects negation, up to an error at most
