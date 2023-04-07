@@ -210,13 +210,13 @@ lemma linear_growth_lower_bound
   rewrite [tsub_mul, Nat.sub_sub, ←Nat.mul_succ]
   apply Nat.sub_le_of_le_add; rewrite [Nat.add_comm]
   calc |f g| * |n|
-      = |n * f g|                       := by rw [Nat.mul_comm, Int.natAbs_mul]
-    _ ≤ |n * f g - f (n • g)| + |f (n • g)|
-          := by lax_exact Int.natAbs_add_le (n * f g - f (n • g)) (f (n • g)); linarith
-    _ = |f (n • g) - n * f g| + |f (n • g)|
-          := by congr 1; rewrite [←Int.natAbs_neg]
-                congr 1; linarith
-    _ ≤ bound * (|n| + 1) + |f (n • g)| := by linarith [h.almost_smul n g]
+    = |n * f g|                       := by rw [Nat.mul_comm, Int.natAbs_mul]
+  _ ≤ |n * f g - f (n • g)| + |f (n • g)|
+        := by lax_exact Int.natAbs_add_le (n * f g - f (n • g)) (f (n • g)); linarith
+  _ = |f (n • g) - n * f g| + |f (n • g)|
+        := by congr 1; rewrite [←Int.natAbs_neg]
+              congr 1; linarith
+  _ ≤ bound * (|n| + 1) + |f (n • g)| := by linarith [h.almost_smul n g]
 
 /-- Lemma `linear_growth_lower_bound` specialised to functions on ℤ applied to 1. -/
 lemma linear_growth_lower_bound_int
@@ -243,7 +243,7 @@ macro_rules (kind := __existsBound)
 lemma almost_additive : bdd f (g₁ + g₂) - f g₁ - f g₂ for all (g₁ g₂ : G) :=
   local_wrapper almost_additive 0
 
-/- Not useful, since we end up not saying anything useful about what the bound is.
+/- Not useful, since we can't say anything useful about what the bound is.
 lemma almost_zero : bdd f 0 :=
   local_wrapper almost_zero 0
 -/
@@ -283,6 +283,8 @@ lemma linear_growth_upper_bound_int (f : AlmostHom ℤ)
   let ⟨_, h⟩ := f.almostAdditive
   ⟨_, _, h.linear_growth_upper_bound_int⟩
 
+/- Not useful, since we end up not saying anything useful about what the bound is.
+
 /-- An almost-homomorphism grows at least linearly (as a function of a scale factor
 applied to its argument). -/
 lemma linear_growth_lower_bound
@@ -295,6 +297,8 @@ lemma linear_growth_lower_bound_int (f : AlmostHom ℤ)
     : ∃ a b : ℕ, ∀ n : ℤ, a * |n| - b ≤ |f n| :=
   let ⟨_, h⟩ := f.almostAdditive
   ⟨_, _, h.linear_growth_lower_bound_int⟩
+
+-/
 
 end AlmostHom
 
@@ -338,7 +342,6 @@ protected def add : AlmostHom G where
   almostAdditive :=
     let ⟨_, h₁⟩ := f₁.almostAdditive
     let ⟨_, h₂⟩ := f₂.almostAdditive
-    -- bound is filled in based on the proof :)
     ⟨_, AlmostAdditive.add h₁ h₂⟩
 
 /-- Negation  of an almost-homomorphism. It is simply the pointwise negation. -/

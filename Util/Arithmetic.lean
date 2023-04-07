@@ -2,16 +2,20 @@ import Mathlib.Data.Nat.Basic
 
 import Util.Arithmetic.Meta
 
-/-! Properties of `Int.natAbs` or otherwise useful for working with it. -/
+/-! # Useful facts in integer arithmetic -/
 
 -- TODO question namespace choices
 
-/- `linarith` is powerful, but generates huge proof terms with all
+/- Note:
+
+`linarith` is powerful, but generates huge proof terms with all
 kinds of stuff in them.
 
 In another construction this caused a mysterious error, so I'm
 avoiding `linarith` for simple proofs where it's unnecessary and not
 especially convenient. -/
+
+/-! ## Some convenient but missing identities about integers -/
 
 section Identities
 namespace Int
@@ -66,7 +70,7 @@ end
 end NatIneqs
 
 
--- Lemmas about Int.natAbs and Int.diff
+/-! ## Lemmas about `Int.natAbs` -/
 namespace Int
 variable (a b c d : ℤ)
 

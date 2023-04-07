@@ -89,14 +89,14 @@ protected def comp  (f₁ : AlmostHom ℤ) (f₂ : AlmostHom G) : AlmostHom G wh
 
 /-- Concrete statement of well-defined-ness of `QuasiHom.comp` wrt second argument. -/
 lemma comp_congr_right (f : AlmostHom ℤ)
-        ⦃f₁ f₂ : AlmostHom G⦄ (h : ∃ bound : ℕ, Bounded (-f₁ + f₂) bound)
-    : ∃ bound : ℕ, Bounded (-f.comp f₁ + f.comp f₂) bound :=
+        ⦃f₁ f₂ : AlmostHom G⦄ (h : -f₁ + f₂ |>.Bounded)
+    : -f.comp f₁ + f.comp f₂ |>.Bounded :=
   let ⟨_, h'⟩ := h; let ⟨_, h⟩ := f.almostAdditive
   ⟨_, h.comp_congr_right h'⟩
 
 /-- Concrete statement of additivity of `QuasiHom.comp` wrt second argument. -/
 lemma almost_comp_add (f : AlmostHom ℤ) (f₁ f₂ : AlmostHom G)
-    : ∃ bound : ℕ, Bounded (-f.comp (f₁ + f₂) + (f.comp f₁ + f.comp f₂)) bound :=
+    : -f.comp (f₁ + f₂) + (f.comp f₁ + f.comp f₂) |>.Bounded :=
   let ⟨_, h⟩ := f.almostAdditive
   ⟨_, h.almost_comp_add f₁ f₂⟩
 
@@ -105,8 +105,8 @@ lemma add_comp (f : AlmostHom G) (f₁ f₂ : AlmostHom ℤ)
     : (f₁ + f₂).comp f = f₁.comp f + f₂.comp f := by ext; rfl
 /-- If f₁ is bounded then f₁.comp f₂ is bounded. -/
 lemma bounded_comp (f₂ : AlmostHom G)
-                   ⦃f₁ : AlmostHom ℤ⦄ (h : ∃ bound : ℕ, Bounded f₁ bound)
-    : ∃ bound : ℕ, Bounded (f₁.comp f₂) bound :=
+                   ⦃f₁ : AlmostHom ℤ⦄ (h : f₁.Bounded)
+    : f₁.comp f₂ |>.Bounded :=
   let ⟨bound, h⟩ := h; ⟨bound, fun g => h (f₂ g)⟩
 
 /-- Composition of AlmostHoms f g is almost equal to (f n * g n)/n -/
@@ -328,7 +328,7 @@ instance : Field (QuasiHom ℤ) :=
     zero_mul  := zero_mul
     mul_zero  := mul_zero
     mul_assoc := mul_assoc
-    one :=  one
+    one := one
     one_mul := one_mul
     mul_one := mul_one
     add_left_neg := add_left_neg
@@ -337,8 +337,6 @@ instance : Field (QuasiHom ℤ) :=
     mul_inv_cancel := sorry
     inv_zero := sorry
   }
-
-
 
 end QuasiHom
 
