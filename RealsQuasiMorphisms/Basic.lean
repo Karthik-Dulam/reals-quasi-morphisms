@@ -160,7 +160,7 @@ lemma almost_smul : |f (m • g) - m * f g| ≤ bound * (|m| + 1) := by
 /-- A kind of commutativity of scaling by ℤ for almost additive functions, with
 one scale factor before and another after applying the function. -/
 -- private pending better choice of name
-private lemma almost_smul_comm
+lemma almost_smul_comm
     : |n * f (m • g) - m * f (n • g)| ≤ bound * (|m| + |n| + 2) :=
   calc |n * f (m • g) - m * f (n • g)|
     ≤ |f ((m * n) • g) - n * f (m • g)| + |f ((m * n) • g) - m * f (n • g)|
