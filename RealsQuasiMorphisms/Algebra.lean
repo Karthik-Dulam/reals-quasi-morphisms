@@ -116,7 +116,7 @@ private lemma comp_almost_mul (f₁ f₂ : AlmostHom ℤ)
   let ⟨b₁, hf₁⟩ := f₁.almostAdditive 
   exact ⟨_, by
     intro n
-    have hypcomm := AlmostAdditive.almost_smul_comm (hf₁) (f₂ n) n 1
+    have hypcomm := AlmostAdditive.almost_smul_interchange (hf₁) (f₂ n) n 1
     specialize hlin n
     simp only [smul_eq_mul, mul_one] at hypcomm
     calc |n * (f₁.comp f₂ n) - f₂ n * f₁ n| 

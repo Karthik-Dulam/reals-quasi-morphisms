@@ -161,8 +161,7 @@ lemma almost_smul : |f (m • g) - m * f g| ≤ bound * (|m| + 1) := by
 /- Second inequality proven in reference 1, generalised to arbitrary abelian groups. -/
 /-- A kind of commutativity of scaling by ℤ for almost additive functions, with
 one scale factor before and another after applying the function. -/
--- private pending better choice of name
-private lemma almost_smul_comm
+lemma almost_smul_interchange
     : |n * f (m • g) - m * f (n • g)| ≤ bound * (|m| + |n| + 2) :=
   calc |n * f (m • g) - m * f (n • g)|
     ≤ |f ((m * n) • g) - n * f (m • g)| + |f ((m * n) • g) - m * f (n • g)|
@@ -176,14 +175,13 @@ private lemma almost_smul_comm
         := by apply Nat.add_le_add <;> apply h.almost_smul
   _ = bound * (|m| + |n| + 2) := by linarith
 
-/-- `almost_smul_comm` specialised to almost additive functions on ℤ applied to 1.
+/-- `almost_smul_interchange` specialised to almost additive functions on ℤ applied to 1.
 
 This is equation (1) in the first reference. -/
--- private pending better choice of name above
-private lemma almost_smul_comm_int
+lemma almost_smul_interchange_int
         ⦃f : ℤ → ℤ⦄ ⦃bound : ℕ⦄ (h : AlmostAdditive f bound) (m n : ℤ)
     : |n * f m - m * f n| ≤ bound * (|m| + |n| + 2) := by
-  lax_exact h.almost_smul_comm m n 1 <;> rw [zsmul_int_one]
+  lax_exact h.almost_smul_interchange m n 1 <;> rw [zsmul_int_one]
 
 /- The following lemmas are useful in bounding compositions of quasi-morphisms. -/
 
@@ -259,15 +257,14 @@ lemma almost_smul : bdd f (m • g) - m * f g for all (g : G) :=
 
 /-- A kind of commutativity of scaling by ℤ for almost-homomorphisms, with one
 scale factor before and another after applying the function. -/
--- private pending better name
-private lemma almost_smul_comm
+lemma almost_smul_interchange
     : bdd n * f (m • g) - m * f (n • g) for all (g : G) :=
-  local_wrapper almost_smul_comm 2
+  local_wrapper almost_smul_interchange 2
 
 /- Not useful, since we end up not saying anything useful about what the bound is.
-private lemma almost_smul_comm_int (f : AlmostHom ℤ) (m n : ℤ)
+lemma almost_smul_interchange_int (f : AlmostHom ℤ) (m n : ℤ)
     : bdd n * f m - m * f n :=
-  local_wrapper almost_smul_comm_int
+  local_wrapper almost_smul_interchange_int
 -/
 
 /-- An almost-homomorphism grows at most linearly (as a function of a scale factor
