@@ -79,13 +79,17 @@ theorem antisymmRelSetoid_eq_leftRel
     : AntisymmRel.setoid α (· ≤ ·) = QuotientGroup.leftRel inst.equivOneSubgroup :=
   Setoid.ext antisymmRel_iff_leftCoset_equivOne_eq -/
 
+variable (α) in
+@[to_additive]
+def Antisymmetrization := α ⧸' inst.equivOneSubgroup
+
 @[to_additive]
 def quotient_equivOneSubgroup_equiv_antisymmetrization
-    : α ⧸' inst.equivOneSubgroup ≃ Antisymmetrization α (· ≤ ·) :=
+    : Antisymmetrization α ≃ _root_.Antisymmetrization α (· ≤ ·) :=
   Equiv.quotientEquivQuotient leftRel_equivOne_iff_antisymmRel
 
 @[to_additive]
-instance : PartialOrder (α ⧸' inst.equivOneSubgroup) :=
+instance : PartialOrder (Antisymmetrization α) :=
   PartialOrder.lift quotient_equivOneSubgroup_equiv_antisymmetrization
     quotient_equivOneSubgroup_equiv_antisymmetrization.injective
 
@@ -122,13 +126,17 @@ theorem rightRel_equivOne_iff_antisymmRel (a b : α)
     : (QuotientGroup.rightRel inst.equivOneSubgroup).r a b ↔ AntisymmRel (· ≤ ·) a b :=
   inst.antisymmRel_iff_rightRel_equivOne a b |>.symm
 
+variable (α) in
+@[to_additive]
+def Antisymmetrization := inst.equivOneSubgroup ⧹ α
+
 @[to_additive]
 def quotient_equivOneSubgroup_equiv_antisymmetrization
-    : inst.equivOneSubgroup ⧹ α ≃ Antisymmetrization α (· ≤ ·) :=
+    : inst.equivOneSubgroup ⧹ α ≃ _root_.Antisymmetrization α (· ≤ ·) :=
   Equiv.quotientEquivQuotient rightRel_equivOne_iff_antisymmRel
 
 @[to_additive]
-instance : PartialOrder (inst.equivOneSubgroup ⧹ α) :=
+instance : PartialOrder (Antisymmetrization α) :=
   PartialOrder.lift quotient_equivOneSubgroup_equiv_antisymmetrization
     quotient_equivOneSubgroup_equiv_antisymmetrization.injective
 
@@ -150,10 +158,15 @@ instance equivOneSubgroup_normal : (inst.equivOneSubgroup).Normal where
                     _ = 1       := mul_inv_self g) ▸
       ⟨conj_le_conj_left' h₁ g, conj_le_conj_left' h₂ g⟩
 
+
+variable (α) in
 @[to_additive]
-def antisymmetrizationOrderedGroup
-    : OrderedGroup (α ⧸ inst.equivOneSubgroup) :=
-{ inferInstanceAs (PartialOrder (α ⧸' inst.equivOneSubgroup)) with
+def Antisymmetrization := α ⧸ inst.equivOneSubgroup
+
+@[to_additive]
+instance : OrderedGroup (Antisymmetrization α) :=
+{ inferInstanceAs <| Group (α ⧸ inst.equivOneSubgroup),
+  inferInstanceAs <| PartialOrder inst.toLeftPreorderedGroup.Antisymmetrization with
   mul_le_mul_left := by
     apply Quotient.ind₂; intro a b (h : a ≤ b)
     apply Quotient.ind; intro c
