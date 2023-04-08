@@ -42,6 +42,8 @@ local notation:35
 def equivOneSet (α : Type u) [One α] [LE α] : Set α :=
   setOf <| AntisymmRel (· ≤ ·) 1
 
+/-! ## Antisymmetrization for preordered groups -/
+
 namespace LeftPreorderedGroup
 variable (α : Type u) [inst : LeftPreorderedGroup α]
 
@@ -179,3 +181,44 @@ instance : OrderedGroup (Antisymmetrization α) :=
     exact inst.mul_le_mul_right h c }
 
 end PreorderedGroup
+
+/-! ## Antisymmetrization for totally preordered groups -/
+
+namespace LeftTotalPreorderedGroup
+variable (α : Type u) [inst : LeftTotalPreorderedGroup α]
+
+@[to_additive]
+def Antisymmetrization := α ⧸' inst.equivOneSubgroup
+
+@[to_additive]
+instance : TotalOrder (Antisymmetrization α) :=
+{ inferInstanceAs <| PartialOrder inst.toLeftPreorderedGroup.Antisymmetrization with
+  le_total := Quotient.ind₂ inst.le_total }
+
+end LeftTotalPreorderedGroup
+
+namespace RightTotalPreorderedGroup
+variable (α : Type u) [inst : RightTotalPreorderedGroup α]
+
+@[to_additive]
+def Antisymmetrization := inst.equivOneSubgroup ⧹ α
+
+@[to_additive]
+instance : TotalOrder (Antisymmetrization α) :=
+{ inferInstanceAs <| PartialOrder inst.toRightPreorderedGroup.Antisymmetrization with
+  le_total := Quotient.ind₂ inst.le_total }
+
+end RightTotalPreorderedGroup
+
+namespace TotalPreorderedGroup
+variable (α : Type u) [inst : TotalPreorderedGroup α]
+
+@[to_additive]
+def Antisymmetrization := α ⧸ inst.equivOneSubgroup
+
+@[to_additive]
+instance : TotalOrderedGroup (Antisymmetrization α) :=
+{ inferInstanceAs <| OrderedGroup inst.toPreorderedGroup.Antisymmetrization with
+  le_total := Quotient.ind₂ inst.le_total }
+
+end TotalPreorderedGroup
