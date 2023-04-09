@@ -181,7 +181,7 @@ end TotalPreorderedCommGroup
 
 /-! ## Total order -/
 
-class TotalOrder extends TotalPreorder α, PartialOrder α
+class TotalOrder extends PartialOrder α, TotalPreorder α
 
 /-- A left-totally ordered additive group is an additive group with a
 total order such that addition on the left is monotone. -/
