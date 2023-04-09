@@ -39,7 +39,7 @@ local notation:35
 
 /-- The set of elements equivalent to 1 in the sense of being both ≤ and ≥ to it. -/
 @[to_additive "The set of elements equivalent to 0 in the sense of being both ≤ and ≥ to it."]
-def equivOneSet (α : Type u) [One α] [LE α] : Set α :=
+def antisymmRelOneSet (α : Type u) [One α] [LE α] : Set α :=
   setOf <| AntisymmRel (· ≤ ·) 1
 
 /-! ## Antisymmetrization for preordered groups -/
@@ -49,7 +49,7 @@ variable (α : Type u) [inst : LeftPreorderedGroup α]
 
 @[to_additive]
 def equivOneSubgroup : Subgroup α where
-  carrier := equivOneSet α
+  carrier := antisymmRelOneSet α
   mul_mem' := fun {a b} ⟨h₁, h₂⟩ ⟨h₁', h₂'⟩ =>
     ⟨calc 1 ≤ a := h₁
           _ = a * 1 := mul_one (M := α) a |>.symm
@@ -96,7 +96,7 @@ variable (α : Type u) [inst : RightPreorderedGroup α]
 
 @[to_additive]
 def equivOneSubgroup : Subgroup α where
-  carrier := equivOneSet α
+  carrier := antisymmRelOneSet α
   mul_mem' := fun {a b} ⟨h₁, h₂⟩ ⟨h₁', h₂'⟩ =>
     ⟨calc 1 ≤ b := h₁'
           _ = 1 * b := one_mul (M := α) b |>.symm
