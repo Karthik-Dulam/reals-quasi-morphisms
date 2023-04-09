@@ -2,6 +2,7 @@ import Util.OrderedGroup.Classes
 import Mathlib.GroupTheory.QuotientGroup
 
 import Util.Logic
+import Util.Equiv
 
 /-! # Antisymmetrization, extended from Preorder's to PreorderedGroup's.
 
@@ -42,6 +43,17 @@ local notation:35
 def antisymmRelOneSet (α : Type u) [One α] [LE α] : Set α :=
   setOf <| AntisymmRel (· ≤ ·) 1
 
+namespace Preorder variable (α : Type u) [Preorder α]
+def Antisymmetrization : Type u := _root_.Antisymmetrization α (· ≤ ·)
+
+instance : PartialOrder (Antisymmetrization α) := by
+  unfold Antisymmetrization; infer_instance
+end Preorder
+
+instance (α : Type u) [inst : TotalPreorder α]
+    : TotalOrder (Preorder.Antisymmetrization α) where
+  le_total := Quotient.ind₂ inst.le_total
+
 /-! ## Antisymmetrization for preordered groups -/
 
 namespace LeftPreorderedGroup
@@ -71,23 +83,14 @@ theorem antisymmRel_iff_leftRel_equivOne (a b : α)
   Iff.and (le_inv_mul_iff_le ..) (inv_mul_le_one_iff ..)
 
 @[to_additive]
-theorem leftRel_equivOne_iff_antisymmRel (a b : α)
-    : (QuotientGroup.leftRel inst.equivOneSubgroup).r a b ↔ AntisymmRel (· ≤ ·) a b :=
-  inst.antisymmRel_iff_leftRel_equivOne a b |>.symm
-
-variable (α) in
-@[to_additive]
-def Antisymmetrization := α ⧸' inst.equivOneSubgroup
+def antisymmetrizationEquivQuotientEquivOneSubgroup
+    : Preorder.Antisymmetrization α ≃ α ⧸' inst.equivOneSubgroup :=
+  Equiv.quotientEquivQuotient antisymmRel_iff_leftRel_equivOne
 
 @[to_additive]
-def quotient_equivOneSubgroup_equiv_antisymmetrization
-    : Antisymmetrization α ≃ _root_.Antisymmetrization α (· ≤ ·) :=
-  Equiv.quotientEquivQuotient leftRel_equivOne_iff_antisymmRel
-
-@[to_additive]
-instance : PartialOrder (Antisymmetrization α) :=
-  PartialOrder.lift quotient_equivOneSubgroup_equiv_antisymmetrization
-    quotient_equivOneSubgroup_equiv_antisymmetrization.injective
+instance : PartialOrder (α ⧸' inst.equivOneSubgroup) :=
+  let equiv := antisymmetrizationEquivQuotientEquivOneSubgroup.symm
+  PartialOrder.lift equiv equiv.injective
 
 end LeftPreorderedGroup
 
@@ -118,23 +121,14 @@ theorem antisymmRel_iff_rightRel_equivOne (a b : α)
   Iff.and (le_mul_inv_iff_le ..) (mul_inv_le_one_iff ..)
 
 @[to_additive]
-theorem rightRel_equivOne_iff_antisymmRel (a b : α)
-    : (QuotientGroup.rightRel inst.equivOneSubgroup).r a b ↔ AntisymmRel (· ≤ ·) a b :=
-  inst.antisymmRel_iff_rightRel_equivOne a b |>.symm
-
-variable (α) in
-@[to_additive]
-def Antisymmetrization := inst.equivOneSubgroup ⧹ α
+def antisymmetrizationEquivQuotientEquivOneSubgroup
+    : Preorder.Antisymmetrization α ≃ inst.equivOneSubgroup ⧹ α :=
+  Equiv.quotientEquivQuotient antisymmRel_iff_rightRel_equivOne
 
 @[to_additive]
-def quotient_equivOneSubgroup_equiv_antisymmetrization
-    : inst.equivOneSubgroup ⧹ α ≃ _root_.Antisymmetrization α (· ≤ ·) :=
-  Equiv.quotientEquivQuotient rightRel_equivOne_iff_antisymmRel
-
-@[to_additive]
-instance : PartialOrder (Antisymmetrization α) :=
-  PartialOrder.lift quotient_equivOneSubgroup_equiv_antisymmetrization
-    quotient_equivOneSubgroup_equiv_antisymmetrization.injective
+instance : PartialOrder (inst.equivOneSubgroup ⧹ α) :=
+  let equiv := antisymmetrizationEquivQuotientEquivOneSubgroup.symm
+  PartialOrder.lift equiv equiv.injective
 
 end RightPreorderedGroup
 
@@ -154,15 +148,11 @@ instance equivOneSubgroup_normal : (inst.equivOneSubgroup).Normal where
                     _ = 1       := mul_inv_self g) ▸
       ⟨conj_le_conj_left' h₁ g, conj_le_conj_left' h₂ g⟩
 
-
-variable (α) in
 @[to_additive]
-def Antisymmetrization := α ⧸ inst.equivOneSubgroup
-
-@[to_additive]
-instance : OrderedGroup (Antisymmetrization α) :=
-{ inferInstanceAs <| Group (α ⧸ inst.equivOneSubgroup),
-  inferInstanceAs <| PartialOrder inst.toLeftPreorderedGroup.Antisymmetrization with
+instance : OrderedGroup (Preorder.Antisymmetrization α) :=
+{ LeftPreorderedGroup.antisymmetrizationEquivQuotientEquivOneSubgroup.Group <|
+    inferInstanceAs <| Group (α ⧸ inst.equivOneSubgroup),
+  inferInstanceAs <| PartialOrder (Preorder.Antisymmetrization α) with
   mul_le_mul_left := by
     apply Quotient.ind₂; intro a b (h : a ≤ b)
     apply Quotient.ind; intro c
@@ -182,12 +172,8 @@ namespace LeftTotalPreorderedGroup
 variable (α : Type u) [inst : LeftTotalPreorderedGroup α]
 
 @[to_additive]
-def Antisymmetrization := α ⧸' inst.equivOneSubgroup
-
-@[to_additive]
-instance : TotalOrder (Antisymmetrization α) :=
-{ inferInstanceAs <| PartialOrder inst.toLeftPreorderedGroup.Antisymmetrization with
-  le_total := Quotient.ind₂ inst.le_total }
+instance : TotalOrder (α ⧸' inst.equivOneSubgroup) where
+  le_total := Quotient.ind₂ inst.le_total
 
 end LeftTotalPreorderedGroup
 
@@ -195,12 +181,8 @@ namespace RightTotalPreorderedGroup
 variable (α : Type u) [inst : RightTotalPreorderedGroup α]
 
 @[to_additive]
-def Antisymmetrization := inst.equivOneSubgroup ⧹ α
-
-@[to_additive]
-instance : TotalOrder (Antisymmetrization α) :=
-{ inferInstanceAs <| PartialOrder inst.toRightPreorderedGroup.Antisymmetrization with
-  le_total := Quotient.ind₂ inst.le_total }
+instance : TotalOrder (inst.equivOneSubgroup ⧹ α) where
+  le_total := Quotient.ind₂ inst.le_total
 
 end RightTotalPreorderedGroup
 
@@ -208,11 +190,7 @@ namespace TotalPreorderedGroup
 variable (α : Type u) [inst : TotalPreorderedGroup α]
 
 @[to_additive]
-def Antisymmetrization := α ⧸ inst.equivOneSubgroup
-
-@[to_additive]
-instance : TotalOrderedGroup (Antisymmetrization α) :=
-{ inferInstanceAs <| OrderedGroup inst.toPreorderedGroup.Antisymmetrization with
-  le_total := Quotient.ind₂ inst.le_total }
+instance : TotalOrderedGroup (Preorder.Antisymmetrization α) where
+  le_total := Quotient.ind₂ inst.le_total
 
 end TotalPreorderedGroup
