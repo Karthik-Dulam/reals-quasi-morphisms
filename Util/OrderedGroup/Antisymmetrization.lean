@@ -75,12 +75,6 @@ theorem leftRel_equivOne_iff_antisymmRel (a b : α)
     : (QuotientGroup.leftRel inst.equivOneSubgroup).r a b ↔ AntisymmRel (· ≤ ·) a b :=
   inst.antisymmRel_iff_leftRel_equivOne a b |>.symm
 
-/- Using just the equality of types makes it difficult to work with their terms. -/
-/- @[to_additive]
-theorem antisymmRelSetoid_eq_leftRel
-    : AntisymmRel.setoid α (· ≤ ·) = QuotientGroup.leftRel inst.equivOneSubgroup :=
-  Setoid.ext antisymmRel_iff_leftCoset_equivOne_eq -/
-
 variable (α) in
 @[to_additive]
 def Antisymmetrization := α ⧸' inst.equivOneSubgroup
