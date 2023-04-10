@@ -32,6 +32,8 @@ that level of generality for this project. So it is omitted.
 
 universe u
 
+variable (α : Type u)
+
 -- Convenience notation for right coset space.
 -- We might as well define it for the left coset space as well.
 local notation:35
@@ -41,31 +43,30 @@ local notation:35
 
 /-- The set of elements equivalent to 1 in the sense of being both ≤ and ≥ to it. -/
 @[to_additive "The set of elements equivalent to 0 in the sense of being both ≤ and ≥ to it."]
-def antisymmRelOneSet (α : Type u) [One α] [LE α] : Set α :=
+def antisymmRelOneSet [One α] [LE α] : Set α :=
   setOf <| AntisymmRel (· ≤ ·) 1
 
-namespace Preorder variable (α : Type u) [Preorder α]
+namespace Preorder variable [Preorder α]
 def Antisymmetrization : Type u := _root_.Antisymmetrization α (· ≤ ·)
 
 instance : PartialOrder (Antisymmetrization α) := by
   unfold Antisymmetrization; infer_instance
 end Preorder
 
-instance (α : Type u) [inst : TotalPreorder α]
+instance [inst : TotalPreorder α]
     : TotalOrder (Preorder.Antisymmetrization α) where
   le_total := Quotient.ind₂ inst.le_total
 
 /-! ## Antisymmetrization for preordered groups -/
 
 namespace LeftPreorderedGroup
-variable (α : Type u) [inst : LeftPreorderedGroup α]
+variable [inst : LeftPreorderedGroup α]
 
 @[to_additive]
 def equivOneSubgroup : Subgroup α where
   carrier := antisymmRelOneSet α
   mul_mem' := fun ⟨h₁, h₂⟩ ⟨h₁', h₂'⟩ =>
-    ⟨Left.le_mul_of_le_left_of_one_le_right h₁ h₁',
-     Left.mul_le_of_left_le_of_right_le_one h₂ h₂'⟩
+    ⟨le_mul_of_le_of_one_le h₁ h₁', mul_le_of_le_of_le_one h₂ h₂'⟩
   one_mem' := antisymmRel_refl (· ≤ ·) 1
   inv_mem' := fun ⟨h₁, h₂⟩ =>
     ⟨Left.one_le_inv_iff.mpr h₂, Left.inv_le_one_iff.mpr h₁⟩
@@ -92,14 +93,13 @@ instance : PartialOrder (α ⧸' inst.equivOneSubgroup) :=
 end LeftPreorderedGroup
 
 namespace RightPreorderedGroup
-variable (α : Type u) [inst : RightPreorderedGroup α]
+variable [inst : RightPreorderedGroup α]
 
 @[to_additive]
 def equivOneSubgroup : Subgroup α where
   carrier := antisymmRelOneSet α
   mul_mem' := fun ⟨h₁, h₂⟩ ⟨h₁', h₂'⟩ =>
-    ⟨Right.le_mul_of_le_right_of_one_le_left h₁' h₁,
-     Right.mul_le_of_right_le_of_left_le_one h₂' h₂⟩
+    ⟨le_mul_of_one_le_of_le h₁ h₁', mul_le_of_le_one_of_le h₂ h₂'⟩
   one_mem' := antisymmRel_refl (· ≤ ·) 1
   inv_mem' := fun ⟨h₁, h₂⟩ =>
     ⟨Right.one_le_inv_iff.mpr h₂, Right.inv_le_one_iff.mpr h₁⟩
@@ -126,7 +126,7 @@ instance : PartialOrder (inst.equivOneSubgroup ⧹ α) :=
 end RightPreorderedGroup
 
 namespace PreorderedGroup
-variable (α : Type u) [inst : PreorderedGroup α]
+variable [inst : PreorderedGroup α]
 
 @[to_additive]
 abbrev equivOneSubgroup := inst.toLeftPreorderedGroup.equivOneSubgroup
@@ -162,7 +162,7 @@ end PreorderedGroup
 /-! ## Antisymmetrization for totally preordered groups -/
 
 namespace LeftTotalPreorderedGroup
-variable (α : Type u) [inst : LeftTotalPreorderedGroup α]
+variable [inst : LeftTotalPreorderedGroup α]
 
 @[to_additive]
 instance : TotalOrder (α ⧸' inst.equivOneSubgroup) where
@@ -171,7 +171,7 @@ instance : TotalOrder (α ⧸' inst.equivOneSubgroup) where
 end LeftTotalPreorderedGroup
 
 namespace RightTotalPreorderedGroup
-variable (α : Type u) [inst : RightTotalPreorderedGroup α]
+variable [inst : RightTotalPreorderedGroup α]
 
 @[to_additive]
 instance : TotalOrder (inst.equivOneSubgroup ⧹ α) where

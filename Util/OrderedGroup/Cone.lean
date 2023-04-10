@@ -339,7 +339,7 @@ def ofLeftPreorderedAddGroup (inst : LeftPreorderedAddGroup α)
     : WeakPositiveCone' α where
   nonneg a := a ≥ 0
   zero_nonneg := inst.le_refl 0
-  add_nonneg := Left.le_add_of_le_left_of_nonneg_right
+  add_nonneg := le_add_of_le_of_nonneg
 
 /- We'll only do a few of these unless we redefine LeftPreorderedGroup
 to be something like
@@ -372,7 +372,7 @@ def ofRightPreorderedAddGroup (inst : RightPreorderedAddGroup α)
     : WeakPositiveCone' α where
   nonneg a := a ≥ 0
   zero_nonneg := inst.le_refl 0
-  add_nonneg := flip Right.le_add_of_le_right_of_nonneg_left
+  add_nonneg := le_add_of_nonneg_of_le
 
 end WeakPositiveCone'
 
