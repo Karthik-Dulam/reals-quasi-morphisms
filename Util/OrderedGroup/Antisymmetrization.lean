@@ -1,4 +1,5 @@
 import Util.OrderedGroup.Classes
+import Util.OrderedGroup.CovContraLemmas
 import Mathlib.GroupTheory.QuotientGroup
 
 import Util.Logic
@@ -62,13 +63,9 @@ variable (α : Type u) [inst : LeftPreorderedGroup α]
 @[to_additive]
 def equivOneSubgroup : Subgroup α where
   carrier := antisymmRelOneSet α
-  mul_mem' := fun {a b} ⟨h₁, h₂⟩ ⟨h₁', h₂'⟩ =>
-    ⟨calc 1 ≤ a := h₁
-          _ = a * 1 := mul_one (M := α) a |>.symm
-          _ ≤ a * b := inst.mul_le_mul_left h₁' a,
-     calc 1 ≥ a := h₂
-          _ = a * 1 := mul_one (M := α) a |>.symm
-          _ ≥ a * b := inst.mul_le_mul_left h₂' a⟩
+  mul_mem' := fun ⟨h₁, h₂⟩ ⟨h₁', h₂'⟩ =>
+    ⟨Left.le_mul_of_le_left_of_one_le_right h₁ h₁',
+     Left.mul_le_of_left_le_of_right_le_one h₂ h₂'⟩
   one_mem' := antisymmRel_refl (· ≤ ·) 1
   inv_mem' := fun ⟨h₁, h₂⟩ =>
     ⟨Left.one_le_inv_iff.mpr h₂, Left.inv_le_one_iff.mpr h₁⟩
@@ -100,13 +97,9 @@ variable (α : Type u) [inst : RightPreorderedGroup α]
 @[to_additive]
 def equivOneSubgroup : Subgroup α where
   carrier := antisymmRelOneSet α
-  mul_mem' := fun {a b} ⟨h₁, h₂⟩ ⟨h₁', h₂'⟩ =>
-    ⟨calc 1 ≤ b := h₁'
-          _ = 1 * b := one_mul (M := α) b |>.symm
-          _ ≤ a * b := inst.mul_le_mul_right h₁ b,
-     calc 1 ≥ b := h₂'
-          _ = 1 * b := one_mul (M := α) b |>.symm
-          _ ≥ a * b := inst.mul_le_mul_right h₂ b⟩
+  mul_mem' := fun ⟨h₁, h₂⟩ ⟨h₁', h₂'⟩ =>
+    ⟨Right.le_mul_of_le_right_of_one_le_left h₁' h₁,
+     Right.mul_le_of_right_le_of_left_le_one h₂' h₂⟩
   one_mem' := antisymmRel_refl (· ≤ ·) 1
   inv_mem' := fun ⟨h₁, h₂⟩ =>
     ⟨Right.one_le_inv_iff.mpr h₂, Right.inv_le_one_iff.mpr h₁⟩
