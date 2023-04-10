@@ -257,38 +257,36 @@ instance toTotalOrderedGroup : TotalOrderedGroup α := { self with }
 end TotalOrderedCommGroup
 
 /-! ### Linear orders (decidable total orders) -/
-instance TotalOrder.ofLinearOrder [inst : LinearOrder α] : TotalOrder α :=
-  { inst with }
+
+namespace LinearOrder
+
+instance toTotalOrder [self : LinearOrder α] : TotalOrder α :=
+  { self with }
 
 variable {α} in
-def linearOrder_of_totalOrder_of_decidableLE
-        (inst : TotalOrder α) (h : @DecidableRel α (· ≤ ·))
-    : LinearOrder α :=
-{ inst with decidable_le := h }
+instance ofTotalOrder [TotalOrder α] [@DecidableRel α (· ≤ ·)] : LinearOrder α :=
+{ ‹TotalOrder α› with decidable_le := ‹DecidableRel LE.le› }
 
-namespace Classical
-noncomputable scoped instance [TotalOrder α] : LinearOrder α :=
-  linearOrder_of_totalOrder_of_decidableLE ‹TotalOrder α› <|
-    Classical.decRel (LE.le (α := α))
-end Classical
+end LinearOrder
 
 -- LinearOrdered(Add)CommGroup is already defined
 
-@[to_additive]
-instance LinearOrderedCommGroup.toTotalOrderedCommGroup
-        [self : LinearOrderedCommGroup α]
-    : TotalPreorderedCommGroup α :=
-{ self with
-  mul_le_mul_left := self.mul_le_mul_left _ _ }
+namespace LinearOrderedCommGroup
 
-namespace Classical
 @[to_additive]
-noncomputable scoped instance [inst : TotalOrderedCommGroup α]
+instance toTotalOrderedCommGroup [self : LinearOrderedCommGroup α]
+    : TotalOrderedCommGroup α :=
+{ self with mul_le_mul_left := self.mul_le_mul_left _ _ }
+
+@[to_additive]
+instance ofTotalOrderedCommGroup
+    [inst : TotalOrderedCommGroup α] [@DecidableRel α (· ≤ ·)]
     : LinearOrderedCommGroup α :=
 { inst with
   mul_le_mul_left := fun _ _ => inst.mul_le_mul_left
-  decidable_le := Classical.decRel _ }
-end Classical
+  decidable_le := ‹DecidableRel LE.le› }
+
+end LinearOrderedCommGroup
 
 /-! ## `Co(ntra)variantClass` instances, enabling all usual lemmas about operations and inequalities. -/
 
