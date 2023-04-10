@@ -262,7 +262,7 @@ instance TotalOrder.ofLinearOrder [inst : LinearOrder α] : TotalOrder α :=
 
 variable {α} in
 def linearOrder_of_totalOrder_of_decidableLE
-        (inst : TotalOrder α) (h : DecidableRel <| LE.le (α := α))
+        (inst : TotalOrder α) (h : @DecidableRel α (· ≤ ·))
     : LinearOrder α :=
 { inst with decidable_le := h }
 
