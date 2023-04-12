@@ -280,29 +280,33 @@ private lemma mul_assoc (a b c : QuasiHom ℤ) :
   apply QuotientAddGroup.induction_on c
   intro _ _ _; rfl
 
-private def one : QuasiHom ℤ := ⟦ ⟨ fun n => n, ⟨0, by intros _ _ ; simp only
-                      [add_sub_cancel', sub_self,
-                      Int.natAbs_zero, le_refl]⟩⟩  ⟧
+@[reducible]
+instance : One (QuasiHom ℤ) where
+  one := ⟦⟨id, 0, fun m n =>
+                    have : (m + n) - m - n = 0 := by abel
+                    this ▸ show |0| ≤ 0 from Nat.le_refl 0⟩⟧
 
-private def one_mul  (a : QuasiHom ℤ) : smulHom one a = a := by
+lemma one_ne_zero : (1:QuasiHom ℤ) ≠ 0 := by
+  -- rewrite fails badly
+  apply not_iff_not.mpr (QuotientAddGroup.eq ..) |>.mpr
+  intro ⟨bound, h⟩              -- suppose ∀ n, |-id n + 0| ≤ bound
+  -- Simplify type of `h`
+  have h : ∀ n : ℤ, |(-n + 0)| ≤ bound := h
+  have h : ∀ n : ℤ, |n| ≤ bound := fun n =>
+    Int.neg_neg n ▸ Int.add_zero (- -n) ▸ h (-n)
+  have : bound + 1 ≤ bound := by
+    rewrite [←Int.natAbs_cast (bound + 1),
+             show ↑(bound + 1) = ↑bound + 1 from rfl]
+    exact h (bound + 1)
+  apply Nat.not_succ_le_self; assumption
+
+private def one_mul (a : QuasiHom ℤ) : smulHom one a = a := by
   apply QuotientAddGroup.induction_on a; intro _; rfl
 
 private def mul_one (a : QuasiHom ℤ) : smulHom a one = a := by
   apply QuotientAddGroup.induction_on a; intro _; rfl
 
 private def inv (a : QuasiHom ℤ) : QuasiHom ℤ := by
-  sorry
-
-private def exists_pair_ne : one ≠ ⟦⟨0, 0, fun _ _ => Nat.le_refl ..⟩⟧ := by
-  /- rewrite [show ∀ a : QuasiHom ℤ, a ≠ 0 ↔ ¬a = 0 by intro; rfl] -/
-  /- by_contra h -/
-  /- apply QuotientAddGroup.eq -/
-  
-  /- apply Quotient.exact  (⟨ fun n => n, ⟨0, by intros _ _ ; simp only -/
-  /-                         [add_sub_cancel', sub_self, -/
-  /-                         Int.natAbs_zero, le_refl]⟩⟩) -/
-  /- have := Quotient.exact h; -/
-  /- simp [funext] at this; -/ 
   sorry
 
 private def mul_comm (a b : QuasiHom ℤ) : smulHom a b = smulHom b a := by
@@ -333,7 +337,7 @@ instance : Field (QuasiHom ℤ) :=
     mul_one := mul_one
     add_left_neg := add_left_neg
     inv := sorry
-    exists_pair_ne := sorry
+    exists_pair_ne := ⟨1, 0, one_ne_zero⟩
     mul_inv_cancel := sorry
     inv_zero := sorry
   }
