@@ -77,7 +77,7 @@ namespace QuasiHom
 /-- A quasi-morphism `f` is non-negative if any representative almost-homomorphism is non-negative.
 
 This is well-defined by `bounded_plus_nonneg_nonneg`. -/
-protected def nonneg (f : QuasiHom G) : Prop := Quot.liftOn f AlmostHom.NonNeg (λ f g h ↦ by
+protected def NonNeg (f : QuasiHom G) : Prop := Quot.liftOn f AlmostHom.NonNeg (λ f g h ↦ by
   rw [QuotientAddGroup.leftRel_apply] at h
   let x : boundedAlmostHoms G := ⟨-f + g, h⟩
   have h₁ : g = f + x := by
@@ -138,7 +138,7 @@ end AlmostHom
 namespace QuasiHom
 
 /-- If `f` and `-f` are both non-negative quasi-morphisms, then `f` must be `0`. -/
-protected lemma nonneg_antisymm {f : QuasiHom G} : f.nonneg → (-f).nonneg → f = 0 := by
+protected lemma nonneg_antisymm {f : QuasiHom G} : f.NonNeg → (-f).NonNeg → f = 0 := by
   apply QuotientAddGroup.induction_on f
   intro f hf hf'
   rw [QuotientAddGroup.eq_zero_iff]
@@ -146,7 +146,7 @@ protected lemma nonneg_antisymm {f : QuasiHom G} : f.nonneg → (-f).nonneg → 
 
 /- This depends on the corresponding result for almost-homomorphisms, which is not yet proved. -/
 /-- If `f` is a quasi-morphism, then at least one of `f` and `-f` must be non-negative. -/
-protected lemma nonneg_total (f : QuasiHom G) : f.nonneg ∨ (-f).nonneg := by
+protected lemma nonneg_total (f : QuasiHom G) : f.NonNeg ∨ (-f).NonNeg := by
   apply QuotientAddGroup.induction_on f
   intro f
   exact AlmostHom.nonneg_total f
@@ -156,12 +156,12 @@ protected lemma nonneg_total (f : QuasiHom G) : f.nonneg ∨ (-f).nonneg := by
 /-- The set of non-negative quasi-morphisms, as a 'total positive cone' (the
 convenient way to construct ordered additive groups). -/
 noncomputable def GP : AddCommGroup.TotalPositiveCone (QuasiHom G) where
-  nonneg := QuasiHom.nonneg
+  nonneg := QuasiHom.NonNeg
   zero_nonneg := QuasiHom.zero_nonneg
   add_nonneg := QuasiHom.add_nonneg
   nonneg_antisymm := QuasiHom.nonneg_antisymm
   nonneg_total := by simp only [QuasiHom.nonneg_total, forall_const]
-  nonnegDecidable := (Classical.dec ·.nonneg)
+  nonnegDecidable := (Classical.dec ·.NonNeg)
 
 -- instance : LinearOrder (QuasiHom G) where
 --   le := sorry

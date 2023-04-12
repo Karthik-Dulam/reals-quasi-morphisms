@@ -113,6 +113,12 @@ lemma sub_le_natAbs_sub : (|a|:ℤ) - |b| ≤ |a - b| := by
 
 lemma neg_le_natAbs : -a ≤ |a| := natAbs_neg a ▸ (-a).le_natAbs
 
+lemma neg_natAbs_le : -|a| ≤ a := by
+  conv => rhs; rewrite [←a.neg_neg]
+  exact Int.neg_le_neg a.neg_le_natAbs
+
+lemma neg_natAbs_le_neg : -|a| ≤ -a := Int.neg_le_neg a.le_natAbs
+
 lemma natAbs_le' {a b : ℤ} (h₁ : a ≤ b) (h₂ : -a ≤ b) : |a| ≤ b := by
   apply Int.natAbs_eq' a |>.elim <;> (intro h; rwa [h])
 
