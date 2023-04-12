@@ -1,4 +1,5 @@
 import Mathlib.Data.Nat.Basic
+import Mathlib.Tactic.LibrarySearch
 
 import Util.Arithmetic.Meta
 
@@ -93,6 +94,22 @@ lemma natAbs_add_le₄
   works, but I'm avoiding it. -/
   Nat.le_trans_le_sum_left (Int.natAbs_add_le (a + b + c) d)
                            (Int.natAbs_add_le₃ a b c)
+
+lemma sub_le_natAbs_sub : (|a|:ℤ) - |b| ≤ |a - b| := by 
+  repeat rw [Int.coe_natAbs]
+  exact abs_sub_abs_le_abs_sub a b
+
+
+  /- rw [sub_eq_add_neg] at h -/
+
+
+
+  /- calc -/ 
+  /-   |a| - |b| = |a + b - b| - |b| := by rw [Int.add_sub_cancel] -/
+  /-           _ ≤ |a + b| + |b| - |b| := sub_neg_eq_add $ Int.natAbs_add_le (a+b) (-b) -/
+  /-           _ ≤ |a - b| := sorry -/
+              
+
 
 lemma neg_le_natAbs : -a ≤ |a| := natAbs_neg a ▸ (-a).le_natAbs
 
