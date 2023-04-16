@@ -1,12 +1,11 @@
-import Util.FunctionBounds
 import RealsQuasiMorphisms.Basic
 import Mathlib.Algebra.Order.Ring.Cone
-
-import Mathlib.Tactic.Abel
 
 import Util.Logic
 import Util.Arithmetic
 import Util.FunctionBounds
+
+import Mathlib.Tactic.Abel
 
 open scoped Int.natAbs
 
@@ -71,28 +70,28 @@ lemma Bounded.nonpos : f.Bounded → (-f).NonNeg :=
   Bounded.nonneg ∘ (boundedAlmostHoms G).neg_mem'
 
 end AlmostHom
-#exit
+
 namespace QuasiHom
 
-/-- A quasi-morphism `f` is non-negative if any representative almost-homomorphism is non-negative.
+/-- Non-negativity of `AlmostHom`s lifts to `QuasiHom`s,
+beause bounded `AlmostHom`s are non-negative. -/
+protected def NonNeg : QuasiHom G → Prop :=
+  Quot.lift AlmostHom.NonNeg fun f₁ f₂ h_b => propext <|
+    let h_b : (-f₁ + f₂).Bounded := QuotientAddGroup.leftRel_apply.mp h_b
+    ⟨((show f₁ + (-f₁ + f₂) = f₂ from add_neg_cancel_left ..) ▸
+        AlmostHom.add_nonneg · h_b.nonneg),
+     ((show f₂ + -(-f₁ + f₂) = f₁ by rw [neg_add_rev, add_neg_cancel_left,
+                                         neg_neg]) ▸
+        AlmostHom.add_nonneg · h_b.nonpos)⟩
 
-This is well-defined by `bounded_plus_nonneg_nonneg`. -/
-protected def NonNeg (f : QuasiHom G) : Prop := Quot.liftOn f AlmostHom.NonNeg (λ f g h ↦ by
-  rw [QuotientAddGroup.leftRel_apply] at h
-  let x : boundedAlmostHoms G := ⟨-f + g, h⟩
-  have h₁ : g = f + x := by
-    simp only [add_neg_cancel_left]
-  have h₂ : f = g + -x := by
-    simp only [neg_add_rev, neg_neg, add_neg_cancel_left]
-  apply propext
-  apply Iff.intro
-  · intro hf
-    rw [h₁]
-    sorry -- apply AlmostHom.bounded_plus_nonneg_nonneg x hf
-  · intro hg
-    rw [h₂]
-    sorry -- apply AlmostHom.bounded_plus_nonneg_nonneg (-x) hg
-  )
+/-- The sum of non-negative `QuasiHom`s is non-negative. -/
+protected lemma add_nonneg {f₁ f₂ : QuasiHom G}
+    : f₁.NonNeg → f₂.NonNeg → (f₁ + f₂).NonNeg :=
+  Quotient.inductionOn₂ f₁ f₂ fun _ _ => AlmostHom.add_nonneg
+
+/-- The zero `QuasiHom` is non-negative. -/
+protected lemma zero_nonneg : (0 : QuasiHom G).NonNeg :=
+  (boundedAlmostHoms G).zero_mem'.nonneg
 
 end QuasiHom
 
@@ -138,19 +137,16 @@ end AlmostHom
 namespace QuasiHom
 
 /-- If `f` and `-f` are both non-negative quasi-morphisms, then `f` must be `0`. -/
-protected lemma nonneg_antisymm {f : QuasiHom G} : f.NonNeg → (-f).NonNeg → f = 0 := by
-  apply QuotientAddGroup.induction_on f
-  intro f hf hf'
-  rw [QuotientAddGroup.eq_zero_iff]
-  exact AlmostHom.bounded_of_nonneg_of_nonpos hf hf'
+protected lemma nonneg_antisymm {f : QuasiHom G}
+    : f.NonNeg → (-f).NonNeg → f = 0 :=
+  Quotient.inductionOn f (motive := fun f : QuasiHom G => f.NonNeg → (-f).NonNeg → f = 0)
+    fun f h₁ h₂ =>
+      (QuotientAddGroup.eq_zero_iff f).mpr <| f.bounded_of_nonneg_of_nonpos h₁ h₂
 
 /- This depends on the corresponding result for almost-homomorphisms, which is not yet proved. -/
 /-- If `f` is a quasi-morphism, then at least one of `f` and `-f` must be non-negative. -/
-protected lemma nonneg_total (f : QuasiHom G) : f.NonNeg ∨ (-f).NonNeg := by
-  apply QuotientAddGroup.induction_on f
-  intro f
-  exact AlmostHom.nonneg_total f
-
+protected lemma nonneg_total : ∀ f : QuasiHom G, f.NonNeg ∨ (-f).NonNeg :=
+  Quotient.ind AlmostHom.nonneg_total
 
 /- The lemma used for `nonneg_total` is not yet proved. -/
 /-- The set of non-negative quasi-morphisms, as a 'total positive cone' (the
@@ -160,29 +156,11 @@ noncomputable def GP : AddCommGroup.TotalPositiveCone (QuasiHom G) where
   zero_nonneg := QuasiHom.zero_nonneg
   add_nonneg := QuasiHom.add_nonneg
   nonneg_antisymm := QuasiHom.nonneg_antisymm
-  nonneg_total := by simp only [QuasiHom.nonneg_total, forall_const]
-  nonnegDecidable := (Classical.dec ·.NonNeg)
+  nonneg_total := QuasiHom.nonneg_total
+  nonnegDecidable := Classical.decPred _
 
--- instance : LinearOrder (QuasiHom G) where
---   le := sorry
---   le_refl := sorry
---   le_trans := sorry
---   le_antisymm := sorry
---   le_total := sorry
---   decidable_le := sorry -- how to even do this??
---   decidable_eq := sorry -- again, HOW to do this??
-
-
--- instance : LinearOrderedField (QuasiHom ℤ) where
---   add_le_add_left := sorry
---   zero_le_one := sorry
---   mul_pos := sorry
---   mul_comm := sorry
---   mul_inv_cancel := sorry
---   inv_zero := sorry
---   le_total := sorry -- this one is already proved in LinearOrder right??
---   decidable_le := sorry -- this one is already proved in LinearOrder right??
-  
+noncomputable instance : LinearOrderedAddCommGroup (QuasiHom G) :=
+  .mkOfPositiveCone GP
 
 end QuasiHom
 
