@@ -19,6 +19,17 @@ especially convenient. -/
 
 section Identities
 namespace Int
+variable (a b : ℕ)
+
+lemma neg_ofNat_le_zero : -(a:ℤ) ≤ 0 :=
+  Int.neg_nonpos_of_nonneg <| Int.ofNat_zero_le a
+
+lemma subNatNat_le_sub : subNatNat a b ≤ ↑(a - b) := by
+  unfold subNatNat; split
+  · exact Int.le_refl ..
+  · exact Int.le_trans (Int.le_of_lt <| Int.negSucc_lt_zero ..)
+                       (Int.ofNat_zero_le ..)
+
 variable (a b c : ℤ)
 
 protected lemma sub_eq_neg_add : a - b = -b + a :=
@@ -115,6 +126,28 @@ lemma natAbs_le_iff' : |a| ≤ b ↔ a ≤ b ∧ -a ≤ b :=
 
 lemma natAbs_le_iff (b : ℕ) : |a| ≤ b ↔ a ≤ b ∧ -a ≤ b :=
   by exact_mod_cast natAbs_le_iff' a b
+
+section variable {a b} (h : |a| ≤ b)
+lemma self_le_of_natAbs_le' : a ≤ b :=
+  le_trans (le_natAbs ..) h
+lemma neg_self_le_of_natAbs_le' : -a ≤ b :=
+  le_trans (neg_le_natAbs ..) h
+lemma neg_le_self_of_natAbs_le' : -b ≤ a :=
+  neg_le_of_neg_le (neg_self_le_of_natAbs_le' h)
+lemma neg_le_neg_self_of_natAbs_le' : -b ≤ -a :=
+  neg_le_neg (self_le_of_natAbs_le' h)
+end
+
+section variable {a} {b : ℕ} (h : |a| ≤ b)
+lemma self_le_of_natAbs_le : a ≤ b :=
+  self_le_of_natAbs_le' <| (ofNat_le ..).mpr h
+lemma neg_self_le_of_natAbs_le : -a ≤ b :=
+  neg_self_le_of_natAbs_le' <| (ofNat_le ..).mpr h
+lemma neg_le_self_of_natAbs_le : -b ≤ a :=
+  neg_le_self_of_natAbs_le' <| (ofNat_le ..).mpr h
+lemma neg_le_neg_self_of_natAbs_le : -b ≤ -a :=
+  neg_le_neg_self_of_natAbs_le' <| (ofNat_le ..).mpr h
+end
 
 lemma nonneg_iff_zero_le : a.NonNeg ↔ 0 ≤ a :=
   show a.NonNeg ↔ (a - 0).NonNeg from

@@ -59,11 +59,7 @@ lemma nonneg_of_bddAbove_on_nonpos
   let ⟨bound', hₐ⟩ := f.almost_neg
   Exists.imp'' fun {bound} h {g} h_g =>
     show f g ≥ -bound - bound' by
-    have : f (-g) - -f g ≥ -bound' := by
-      apply Int.neg_le_of_neg_le
-      -- add |·| to LHS and lift goal to ℕ
-      apply Int.le_trans (Int.neg_le_natAbs ..); apply Int.ofNat_le.mpr
-      exact hₐ g
+    have : f (-g) - -f g ≥ -bound' := Int.neg_le_self_of_natAbs_le (hₐ g)
     linarith [this, h (neg_nonpos_of_nonneg h_g)]
 
 variable (f) in
