@@ -1,6 +1,8 @@
 import RealsQuasiMorphisms.Ring
 import RealsQuasiMorphisms.Order
 
+import Mathlib.Algebra.Order.Field.Defs
+
 lemma int_wf_of_lower_bound (s : Set ℤ) (a : ℤ) (h : a ∈ lowerBounds s)
     : s.IsWf :=
   -- Anything works in place of `.natAbs` as long as it sends non-negative
@@ -72,13 +74,20 @@ rely on general abstract algebra to go from there to a field. -/
 
 namespace EudoxusReal
 
-noncomputable instance : Field EudoxusReal :=
-  { exists_pair_ne := Nontrivial.exists_pair_ne
+noncomputable instance instField : Field EudoxusReal :=
+  IsField.toField {
+    exists_pair_ne := Nontrivial.exists_pair_ne
     mul_comm := CommRing.mul_comm
     mul_inv_cancel := fun {a} => Quotient.inductionOn a fun f h =>
       have h : ¬f.Bounded := show f ∉ boundedAlmostHoms ℤ from
                              mt (QuotientAddGroup.eq_zero_iff f).mpr h
       ⟨f.inv h, (QuotientAddGroup.eq ..).mpr (f.mul_inv h)⟩
-  : IsField EudoxusReal }.toField
+  }
+
+noncomputable instance : LinearOrderedField EudoxusReal :=
+  { instField, inferInstanceAs (LinearOrderedAddCommGroup EudoxusReal) with
+    zero_le_one :=
+      ⟨0, fun {n} (h : n ≥ 0) => show n - 0 ≥ 0 from Int.sub_zero n |>.symm ▸ h⟩
+    mul_pos := fun a b h_a h_b => sorry }
 
 end EudoxusReal
