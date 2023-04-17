@@ -26,32 +26,83 @@ variable {f : AlmostHom G}
 section NonNegBasicLemmas
 
 /-- A non-negative `AlmostHom` is bounded below on {g | g ≥ 0}. -/
-lemma bddBelow_on_nonneg_of_nonneg
+lemma NonNeg.bddBelow_on_nonneg
     : f.NonNeg → (⇑f).BddBelowOn (Set.Ici 0) :=
   id
 
+/-- An `AlmostHom` is non-negative if bounded below on {g | g ≥ 0}. -/
+lemma nonneg_of_bddBelow_on_nonneg
+    : (⇑f).BddBelowOn (Set.Ici 0) → f.NonNeg :=
+  id
+
+variable (f) in
+/-- An `AlmostHom` is non-negative iff it is bounded below on {g | g ≥ 0}. -/
+lemma bddBelow_on_nonneg_iff_nonneg
+    : f.NonNeg ↔ (⇑f).BddBelowOn (Set.Ici 0) :=
+  ⟨NonNeg.bddBelow_on_nonneg, nonneg_of_bddBelow_on_nonneg⟩
+
 /-- A non-negative `AlmostHom` is bounded above on {g | g ≤ 0}. -/
-lemma bddAbove_on_nonpos_of_nonneg
+lemma NonNeg.bddAbove_on_nonpos
     : f.NonNeg → (⇑f).BddAboveOn (Set.Iic 0) :=
   let ⟨bound', hₐ⟩ := f.almost_neg
   Exists.imp'' fun {bound} h {g} h_g =>
-      show f g ≤ bound' - bound by
-      have : f g - -f (-g) ≤ bound' := by
-        -- add |·| to LHS and lift goal to ℕ
-        apply Int.le_trans (Int.le_natAbs ..); apply Int.ofNat_le.mpr
-        rewrite [show f g - -f (-g) = f (-g) - -f g by abel]; exact hₐ g
-      linarith [this, h (neg_nonneg_of_nonpos h_g)]
+    show f g ≤ bound' - bound by
+    have : f g - -f (-g) ≤ bound' := by
+      -- add |·| to LHS and lift goal to ℕ
+      apply Int.le_trans (Int.le_natAbs ..); apply Int.ofNat_le.mpr
+      rewrite [show f g - -f (-g) = f (-g) - -f g by abel]; exact hₐ g
+    linarith [this, h (neg_nonneg_of_nonpos h_g)]
+
+/-- An `AlmostHom` is non-negative if bounded above on {g | g ≤ 0}. -/
+lemma nonneg_of_bddAbove_on_nonpos
+    : (⇑f).BddAboveOn (Set.Iic 0) → f.NonNeg :=
+  let ⟨bound', hₐ⟩ := f.almost_neg
+  Exists.imp'' fun {bound} h {g} h_g =>
+    show f g ≥ -bound - bound' by
+    have : f (-g) - -f g ≥ -bound' := by
+      apply Int.neg_le_of_neg_le
+      -- add |·| to LHS and lift goal to ℕ
+      apply Int.le_trans (Int.neg_le_natAbs ..); apply Int.ofNat_le.mpr
+      exact hₐ g
+    linarith [this, h (neg_nonpos_of_nonneg h_g)]
+
+variable (f) in
+/-- An `AlmostHom` is non-negative iff it is bounded above on {g | g ≤ 0}. -/
+lemma bddAbove_on_nonpos_iff_nonneg
+    : f.NonNeg ↔ (⇑f).BddAboveOn (Set.Iic 0) :=
+  ⟨NonNeg.bddAbove_on_nonpos, nonneg_of_bddAbove_on_nonpos⟩
 
 /-- An `AlmostHom` whose negative is non-negative is bounded above on {g | g ≥ 0}. -/
 lemma bddAbove_on_nonneg_of_nonpos
     : (-f).NonNeg → (⇑f).BddAboveOn (Set.Ici 0) :=
   Exists.imp'' (Int.le_neg_of_le_neg ∘ ·)
 
+/-- If an `AlmostHom` is bounded above on {g | g ≥ 0}, its negative is non-negative. -/
+lemma nonpos_of_bddAbove_on_nonneg
+    : (⇑f).BddAboveOn (Set.Ici 0) → (-f).NonNeg :=
+  Exists.imp'' (Int.neg_le_neg ∘ ·)
+
+variable (f) in
+/-- The negative of an `AlmostHom` f is non-negative iff f is bounded above on {g | g ≥ 0}. -/
+lemma bddAbove_on_nonneg_iff_nonpos
+    : (-f).NonNeg ↔ (⇑f).BddAboveOn (Set.Ici 0) :=
+  ⟨bddAbove_on_nonneg_of_nonpos, nonpos_of_bddAbove_on_nonneg⟩
+
 /-- An `AlmostHom` whose negative is non-negative is bounded below on {g | g ≤ 0}. -/
 lemma bddBelow_on_nonpos_of_nonpos
     : (-f).NonNeg → (⇑f).BddBelowOn (Set.Iic 0) :=
   -- No idea why by exact is needed here; probably helps infer something.
-  Exists.imp'' (by exact Int.neg_le_of_neg_le ∘ ·) ∘ bddAbove_on_nonpos_of_nonneg
+  Exists.imp'' (by exact Int.neg_le_of_neg_le ∘ ·) ∘ NonNeg.bddAbove_on_nonpos
+
+/-- If an `AlmostHom` is bounded below on {g | g ≤ 0}, its negative is non-negative. -/
+lemma nonpos_of_bddBelow_on_nonpos
+    : (⇑f).BddBelowOn (Set.Iic 0) → (-f).NonNeg:=
+  (-f).nonneg_of_bddAbove_on_nonpos ∘ Exists.imp'' (Int.neg_le_neg ∘ ·)
+
+/-- The negative of an `AlmostHom` f is non-negative iff f is bounded below on {g | g ≤ 0}. -/
+lemma nonpos_iff_bddBelow_on_nonpos
+    : (-f).NonNeg ↔ (⇑f).BddBelowOn (Set.Iic 0) :=
+  ⟨bddBelow_on_nonpos_of_nonpos, nonpos_of_bddBelow_on_nonpos⟩
 
 end NonNegBasicLemmas
 
@@ -105,8 +156,8 @@ lemma bounded_of_nonneg_of_nonpos (h₁ : f.NonNeg) (h₂ : (-f).NonNeg)
     : f.Bounded :=
   let ⟨bound₁, h₁'⟩ := bddAbove_on_nonneg_of_nonpos h₂
   let ⟨bound₂, h₂'⟩ := bddAbove_on_nonneg_of_nonpos <| (neg_neg f).symm ▸ h₁
-  let ⟨bound₃, h₃'⟩ := bddAbove_on_nonpos_of_nonneg h₁
-  let ⟨bound₄, h₄'⟩ := bddAbove_on_nonpos_of_nonneg h₂
+  let ⟨bound₃, h₃'⟩ := h₁.bddAbove_on_nonpos
+  let ⟨bound₄, h₄'⟩ := h₂.bddAbove_on_nonpos
   ⟨max (max bound₁ bound₂) (max bound₃ bound₄) |>.toNat, fun g => by
      custom_zify
      refine Int.le_trans ?_ (Int.self_le_toNat ..) -- remove `toNat`from RHS
