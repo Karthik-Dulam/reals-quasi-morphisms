@@ -1,5 +1,5 @@
 import Mathlib.Tactic.Zify          -- for `zify` tactic
-import Mathlib.Data.Int.Order.Basic -- for `Int.coe_natAbs` lemma
+import Mathlib.Data.Int.Order.Basic -- for `Int.abs_eq_natAbs` lemma
 
 /-! # Basic notation/tactics specific to the integers. --/
 
@@ -31,6 +31,6 @@ scoped syntax (name := customZify_notation)
 macro_rules (kind := customZify_notation)
 | `(tactic| custom_zify $[[$simpArgs,*]]? $[at $location]?) =>
   `(tactic| zify $[[$simpArgs,*]]? $[at $location]?;
-            repeat rewrite [←Int.coe_natAbs] $[at $location]?)
+            repeat rewrite [Int.abs_eq_natAbs] $[at $location]?)
 
 end Int.natAbs
