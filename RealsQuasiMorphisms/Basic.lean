@@ -439,7 +439,4 @@ abbrev QuasiHom := AlmostHom G ⧸ boundedAlmostHoms G
 /-- The Eudoxus construction of the real numbers as quasi-homomorphisms from ℤ to ℤ. -/
 abbrev EudoxusReal := QuasiHom ℤ
 
-/- Typeclass inference won't unfold the definition of `QuasiHom`
-automatically, so the instance must be defined manually. -/
-
 end Quotient
