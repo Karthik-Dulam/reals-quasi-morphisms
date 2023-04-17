@@ -101,6 +101,13 @@ protected def comp (f₁ : AlmostHom ℤ) (f₂ : AlmostHom G) : AlmostHom G whe
     -- bound is filled in based on the proof :)
     ⟨_, AlmostAdditive.comp h₁ h₂⟩
 
+/-- The identity function on ℤ as an `AlmostHom`. -/
+protected def id : AlmostHom ℤ where
+  toFun := id
+  almostAdditive :=
+    ⟨0, fun m n => have : (m + n) - m - n = 0 := by abel
+                   this ▸ show |0| ≤ 0 from Nat.le_refl 0⟩
+
 /-- Concrete statement of well-defined-ness of `QuasiHom.comp` wrt second argument. -/
 lemma comp_sub_bounded_of_sub_bounded (f : AlmostHom ℤ)
         ⦃f₁ f₂ : AlmostHom G⦄ (h : -f₁ + f₂ |>.Bounded)
@@ -199,9 +206,7 @@ namespace EudoxusReal
 /-- The identity for the multiplication of `QuasiHom`s. -/
 @[reducible]
 instance : One EudoxusReal where
-  one := ⟦⟨id, 0, fun m n =>
-                    have : (m + n) - m - n = 0 := by abel
-                    this ▸ show |0| ≤ 0 from Nat.le_refl 0⟩⟧
+  one := ⟦AlmostHom.id⟧
 
 /-- The multiplicative and additive identities of `EudoxusReal` are distinct. -/
 lemma one_ne_zero : (1:EudoxusReal) ≠ 0 := by
