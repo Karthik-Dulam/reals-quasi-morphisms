@@ -48,7 +48,6 @@ lemma NonNeg.bddAbove_on_nonpos
   Exists.imp'' fun {bound} h {g} h_g =>
     show f g ≤ bound' - bound by
     have : f g - -f (-g) ≤ bound' := by
-      -- add |·| to LHS and lift goal to ℕ
       apply Int.le_trans (Int.le_natAbs ..); apply Int.ofNat_le.mpr
       rewrite [show f g - -f (-g) = f (-g) - -f g by abel]; exact hₐ g
     linarith [this, h (neg_nonneg_of_nonpos h_g)]
@@ -143,6 +142,7 @@ protected lemma zero_nonneg : (0 : QuasiHom G).NonNeg :=
 end QuasiHom
 
 end PartialOrder
+/-! `QuasiHom G` is partially ordered when `G` is linearly ordered. -/
 section LinearOrder
 variable [LinearOrderedAddCommGroup G] {f f₁ f₂ : AlmostHom G}
 
@@ -174,11 +174,6 @@ lemma nonneg_and_nonpos_iff_bounded (f : AlmostHom G)
   ⟨And.elim bounded_of_nonneg_of_nonpos,
    fun h => ⟨h.nonneg, h.nonpos⟩⟩
 
-/- This is a somewhat non-trivial result and not proven yet. -/
-/-- If `f` is an almost-homomorphism, then at least one of `f` and `-f` must be non-negative. -/
-protected lemma nonneg_total (f : AlmostHom G) : f.NonNeg ∨ (-f).NonNeg := by
-  sorry
-
 end AlmostHom
 
 namespace QuasiHom
@@ -190,25 +185,119 @@ protected lemma nonneg_antisymm {f : QuasiHom G}
     fun f h₁ h₂ =>
       (QuotientAddGroup.eq_zero_iff f).mpr <| f.bounded_of_nonneg_of_nonpos h₁ h₂
 
-/- This depends on the corresponding result for almost-homomorphisms, which is not yet proved. -/
-/-- If `f` is a quasi-morphism, then at least one of `f` and `-f` must be non-negative. -/
-protected lemma nonneg_total : ∀ f : QuasiHom G, f.NonNeg ∨ (-f).NonNeg :=
-  Quotient.ind AlmostHom.nonneg_total
+variable (G)
 
-/- The lemma used for `nonneg_total` is not yet proved. -/
-/-- The set of non-negative quasi-morphisms, as a 'total positive cone' (the
-convenient way to construct ordered additive groups). -/
-noncomputable def GP : AddCommGroup.TotalPositiveCone (QuasiHom G) where
+noncomputable def positiveCone : AddCommGroup.PositiveCone (QuasiHom G) where
   nonneg := QuasiHom.NonNeg
   zero_nonneg := QuasiHom.zero_nonneg
   add_nonneg := QuasiHom.add_nonneg
   nonneg_antisymm := QuasiHom.nonneg_antisymm
-  nonneg_total := QuasiHom.nonneg_total
-  nonnegDecidable := Classical.decPred _
 
-noncomputable instance : LinearOrderedAddCommGroup (QuasiHom G) :=
-  .mkOfPositiveCone GP
+noncomputable instance : OrderedAddCommGroup (QuasiHom G) :=
+  .mkOfPositiveCone (positiveCone G)
 
 end QuasiHom
 
 end LinearOrder
+/-! `QuasiHom G` is totally ordered when `G` is `ℤ` specifically. -/
+section Integers
+
+namespace AlmostHom
+
+-- Note: the next three results have terrible names.
+
+theorem positive_linear_growth_of_large_enough_value
+    {f : ℤ → ℤ} {bound : ℕ} (h_bound : AlmostAdditive f bound)
+    {m : ℕ} (h : f m > bound * 2)
+    : ∀ n : ℕ, f n ≥ n - ↑((m + 3) * bound) :=
+  have h_fm_nonneg : |f m| = f m := Eq.symm <| Int.eq_natAbs_of_zero_le <|
+    calc (0:ℤ) ≤ bound * 2 := Int.ofNat_zero_le ..
+             _ ≤ f m       := Int.le_of_lt h
+  -- Linear growth for multiples of m
+  have : ∀ n : ℕ, |f (n * m)| ≥ (f m - bound) * |n| - bound := by
+    intro n
+    rewrite [←h_fm_nonneg, show (_:ℤ) * (m:ℤ) = (_:ℤ) • (m:ℤ) from rfl]
+    -- Poor man's controlled norm_cast
+    norm_cast; rewrite [Int.abs_eq_natAbs,
+                        Int.subNatNat_of_le <|
+                          show bound ≤ |f m| from Int.ofNat_le.mp <|
+                          calc (bound:ℤ) ≤ bound * 2 := by linarith
+                                       _ ≤ f m       := Int.le_of_lt h
+                                       _ ≤ |f m|     := Int.le_natAbs]
+    norm_cast; rewrite [Int.abs_eq_natAbs]; apply Int.le_trans (Int.subNatNat_le_sub ..)
+    exact_mod_cast h_bound.linear_growth_lower_bound n m
+  sorry
+
+theorem diverges_nonneg_of_nonneg_of_not_bddAbove_on_nonneg {f : AlmostHom ℤ}
+    (h : ¬(⇑f).BddAboveOn (Set.Ici 0))
+    : ∀ R : ℤ, ∃ N : ℕ, ∀ n : ℤ, n ≥ N → f n ≥ R :=
+  let ⟨bound, h_a⟩ := f.almost_additive
+  let ⟨m, h⟩ : ∃ m : ℕ, bound * 2 < f m := by
+    unfold Function.BddAboveOn Function.BddAboveOnBy at h; push_neg at h
+    let ⟨m, h_nonneg, h⟩ := h (bound * 2)
+    -- All we really need here is that `m = ↑(_something_)`.
+    exact ⟨m.toNat, Int.toNat_of_nonneg h_nonneg ▸ h⟩
+  fun R => ⟨R.toNat + (m + 3) * bound, fun n h_ge => by
+    -- Replace n:ℤ to n':ℤ
+    let n' := n.toNat
+    have : ↑n' = n :=
+      Int.toNat_of_nonneg <| Int.le_trans (Int.ofNat_zero_le ..) h_ge
+    rewrite [←this] at h_ge ⊢
+    let h_ge : n' ≥ R.toNat + (m + 3) * bound := Int.ofNat_le.mp h_ge
+    calc f n' ≥ n' - ↑((m + 3) * bound)
+                  := positive_linear_growth_of_large_enough_value h_a h n'
+            _ ≥ ↑(R.toNat + (m + 3) * bound) - ↑((m + 3) * bound)
+                  := Int.sub_le_sub_right (c := _) <| Int.ofNat_le.mpr h_ge
+            _ ≥ R.toNat := by custom_zify; linarith
+            _ ≥ R       := Int.self_le_toNat ..⟩
+
+lemma diverges_nonpos_of_nonneg_of_not_bddAbove_on_nonneg {f : AlmostHom ℤ}
+    (h : ¬(⇑f).BddAboveOn (Set.Ici 0))
+    (R : ℤ) : ∃ N : ℕ, ∀ n : ℤ, n ≤ -N → f n ≤ R :=
+  let ⟨bound, h_a⟩ := f.almost_neg
+  let ⟨N, h⟩ := diverges_nonneg_of_nonneg_of_not_bddAbove_on_nonneg h (-R + bound)
+  ⟨N, fun n (h_le : n ≤ -N) =>
+        have : f n - -f (-n) ≤ bound := by
+          conv in f n => rw [←neg_neg n]
+          exact Int.le_trans (Int.le_natAbs ..) (Int.ofNat_le.mpr <| h_a (-n))
+        by linarith [this, h (-n) (Int.le_neg_of_le_neg h_le)]⟩
+
+theorem nonneg_total_integers (f : AlmostHom ℤ) : f.NonNeg ∨ (-f).NonNeg :=
+  Classical.byCases (p := (⇑f).BddAboveOn (Set.Ici 0))
+    (Or.inr ∘ f.nonpos_of_bddAbove_on_nonneg)
+    fun h => Or.inl <|
+      have ⟨N, h⟩ := diverges_nonneg_of_nonneg_of_not_bddAbove_on_nonneg h 0
+      let ⟨a, b, h'⟩ := f.linear_growth_upper_bound_int
+      ⟨-(a * N + b : ℕ), fun {n} h_nonneg => if h_comp : n ≥ N then
+         Int.le_trans (Int.neg_ofNat_le_zero (a * N + b)) (h n h_comp)
+       else
+         Int.neg_le_self_of_natAbs_le <| calc
+           |f n| ≤ a * |n| + b := h' n
+               _ ≤ a * N + b
+                     := Nat.add_le_add_right (k := b) <| Nat.mul_le_mul_left (k := a) <|
+                        show |n| ≤ N from
+                        Int.natAbs_le
+                          (by linarith [h_comp])
+                          (Int.le_trans (Int.neg_nonpos_of_nonneg h_nonneg)
+                                        (Int.ofNat_zero_le ..))⟩
+
+end AlmostHom
+
+namespace EudoxusReal
+
+/-- If `f` is a quasi-morphism, then at least one of `f` and `-f` must be non-negative. -/
+protected lemma nonneg_total : ∀ f : EudoxusReal, f.NonNeg ∨ (-f).NonNeg :=
+  Quotient.ind AlmostHom.nonneg_total_integers
+
+noncomputable def totalPositiveCone
+    : AddCommGroup.TotalPositiveCone EudoxusReal where
+  toPositiveCone := QuasiHom.positiveCone ℤ
+  nonneg_total := EudoxusReal.nonneg_total
+  nonnegDecidable := Classical.decPred _
+
+noncomputable instance : LinearOrderedAddCommGroup EudoxusReal :=
+  .mkOfPositiveCone totalPositiveCone
+
+end EudoxusReal
+
+end Integers
