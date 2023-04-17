@@ -202,51 +202,57 @@ lemma int_wf_of_lower_bound (s : Set ℤ) (a : ℤ) (h : a ∈ lowerBounds s)
 example (a b c : ℤ) : a - b ≤ c -> a ≤ c + b  := fun a_1 => Int.le_add_of_sub_right_le a_1
 example (a b c : ℤ) : a + b ≤ c + b -> a ≤ c  := fun a_1 => le_of_add_le_add_right a_1
 
-def unbounded_beolow (f : AlmostHom ℤ) (hb : f ∉ boundedAlmostHoms ℤ) (hf : f.NonNeg)
-    : ∀ n, ∃ k, f k ≤ n := by
-  have pos := bdd_and_nonneg_of_pos hf hb
-  let ⟨b', hb'⟩ := almost_neg f
-  simp only [boundedAlmostHoms, AddSubgroup.mem_mk, Set.mem_setOf_eq, not_exists, _root_.Bounded, Bounded] at hb
-  push_neg at hb
-  let ⟨k, hf⟩ := hf
-  intro n
-  specialize hb $ |n| + b'
-  let ⟨g, hb⟩ := hb
-  have :=  Int.le_add_of_sub_right_le $ Int.sub_le_natAbs_sub (f (-g)) (-f g)
-  simp only [sub_neg_eq_add, Int.natAbs_neg] at this
-  simp at hb'
-  use -g
-  calc
-    f (-g) ≤ |f (-g)| := Int.le_natAbs
-         _ ≤ |f (-g) + f g| + |f g| := this
-         _ ≤ b' + |f g| := by rw [add_le_add_iff_right]; norm_cast; exact hb' g
-         _ ≤ n := sorry
+/- def unbounded_beolow (f : AlmostHom ℤ) (hb : f ∉ boundedAlmostHoms ℤ) (hf : f.NonNeg) -/
+/-     : ∀ n, ∃ k, f k ≤ n := by -/
+/-   have pos := bdd_and_nonneg_of_pos hf hb -/
+/-   let ⟨b', hb'⟩ := almost_neg f -/
+/-   simp only [boundedAlmostHoms, AddSubgroup.mem_mk, Set.mem_setOf_eq, not_exists, _root_.Bounded, Bounded] at hb -/
+/-   push_neg at hb -/
+/-   let ⟨k, hf⟩ := hf -/
+/-   intro n -/
+/-   specialize hb $ |n| + b' -/
+/-   let ⟨g, hb⟩ := hb -/
+/-   have :=  Int.le_add_of_sub_right_le $ Int.sub_le_natAbs_sub (f (-g)) (-f g) -/
+/-   simp only [sub_neg_eq_add, Int.natAbs_neg] at this -/
+/-   simp at hb' -/
+/-   use -g -/
+/-   calc -/
+/-     f (-g) ≤ |f (-g)| := Int.le_natAbs -/
+/-          _ ≤ |f (-g) + f g| + |f g| := this -/
+/-          _ ≤ b' + |f g| := by rw [add_le_add_iff_right]; norm_cast; exact hb' g -/
+/-          _ ≤ n := sorry -/
       /- _ ≤ sorry := sorry -/
   /- exact ⟨-g, calc -/
   /-   f g ≤ |f g| := Int.le_natAbs -/
   /-     _ ≤ -/
     /- _ ≤ sorry := sorry⟩ -/
 
-noncomputable def invFun (f : AlmostHom ℤ) (hb : b ∉ boundedAlmostHoms ℤ) (hf : f.NonNeg)
+noncomputable def invFun (f : AlmostHom ℤ) (hb : ¬Bounded f) (hf : f.NonNeg)
     : ℤ → ℤ := by
+  have := mt (AlmostHom.bounded_of_nonneg_of_nonpos hf) hb
+  have h :  ¬(⇑f).BddAboveOn (Set.Ici 0) := by 
+    rwa [←AlmostHom.nonpos_iff_bddAbove_on_nonneg]
+  have hdiv := diverges_nonpos_of_nonneg_of_not_bddAbove_on_nonneg h
+  have hdiv' := diverges_nonneg_of_nonneg_of_not_bddAbove_on_nonneg h
   intro n
   let hl := { m : ℤ | f m ≥ n }
   have hwf : Set.IsWf $ hl := by
-    let ⟨k, hf⟩ := hf
-    simp only [boundedAlmostHoms, AddSubgroup.mem_mk, Set.mem_setOf_eq,
-               not_exists, Bounded] at hb
-    push_neg at hb
-    apply int_wf_of_lower_bound _ $ k
-    rw [lowerBounds]
+    let ⟨N, hN⟩ := hdiv (n-1)
+    apply int_wf_of_lower_bound _ (-N)
     intro a ha
-    simp at ha
-    sorry
-
-    /- rw [Set.IsWf] -/
-    /- apply bdd_below.well_founded_on_lt -/
-  have hnbd : hl.Nonempty := sorry
+    simp only [ge_iff_le, Set.mem_setOf_eq] at ha
+    specialize hN a
+    have contra := mt hN
+    push_neg at contra
+    exact le_of_lt (contra $ Int.sub_one_lt_of_le ha)
+  have hnbd : hl.Nonempty := by 
+    let ⟨N, hN⟩ := hdiv' n
+    specialize hN N (by exact le_refl ..)
+    use N
+    assumption
   exact Set.IsWf.min hwf hnbd
 
+example (a b : ℤ) : a ≤ b -> a - 1 < b := fun a_1 => Int.sub_one_lt_of_le a_1
 lemma infFunAlmosthom (f : AlmostHom ℤ) (hb : f ∉ boundedAlmostHoms ℤ) (hf : f.NonNeg) :
     ∃ k : ℕ, ∀ n₁ n₂, |(invFun f hb hf) (n₁ + n₂)  - (invFun f hb hf) n₁ - (invFun f hb hf) n₂| ≤ k := sorry
 
