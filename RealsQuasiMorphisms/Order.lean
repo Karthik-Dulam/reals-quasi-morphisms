@@ -37,7 +37,7 @@ lemma nonneg_of_bddBelow_on_nonneg
 
 variable (f) in
 /-- An `AlmostHom` is non-negative iff it is bounded below on {g | g ≥ 0}. -/
-lemma bddBelow_on_nonneg_iff_nonneg
+lemma nonneg_iff_bddBelow_on_nonneg
     : f.NonNeg ↔ (⇑f).BddBelowOn (Set.Ici 0) :=
   ⟨NonNeg.bddBelow_on_nonneg, nonneg_of_bddBelow_on_nonneg⟩
 
@@ -63,7 +63,7 @@ lemma nonneg_of_bddAbove_on_nonpos
 
 variable (f) in
 /-- An `AlmostHom` is non-negative iff it is bounded above on {g | g ≤ 0}. -/
-lemma bddAbove_on_nonpos_iff_nonneg
+lemma nonneg_iff_bddAbove_on_nonpos
     : f.NonNeg ↔ (⇑f).BddAboveOn (Set.Iic 0) :=
   ⟨NonNeg.bddAbove_on_nonpos, nonneg_of_bddAbove_on_nonpos⟩
 
@@ -79,7 +79,7 @@ lemma nonpos_of_bddAbove_on_nonneg
 
 variable (f) in
 /-- The negative of an `AlmostHom` f is non-negative iff f is bounded above on {g | g ≥ 0}. -/
-lemma bddAbove_on_nonneg_iff_nonpos
+lemma nonpos_iff_bddAbove_on_nonneg
     : (-f).NonNeg ↔ (⇑f).BddAboveOn (Set.Ici 0) :=
   ⟨bddAbove_on_nonneg_of_nonpos, nonpos_of_bddAbove_on_nonneg⟩
 
