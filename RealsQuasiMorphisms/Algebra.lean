@@ -175,12 +175,7 @@ lemma comp_almost_comm (f₁ f₂ : AlmostHom ℤ)
         <| Or.resolve_left (Nat.eq_zero_or_pos ..) (Int.natAbs_ne_zero.2 c)
     _ ≤ _ := self_le_add_left  (2*(k₁ + k₂)) |(f₁.comp f₂ - f₂.comp f₁) 0| ⟩
 
-
-
-/- variable {α : Type _} {s : Set α} [Preorder α] [LocallyFiniteOrder α] -/
-
-/- lemma bdd_below.well_founded_on_lt : BddBelow s → s.WellFoundedOn (·<·)  := sorry -/
-
+/- If a set has a lowerbound it is wellfounded. -/
 lemma int_wf_of_lower_bound (s : Set ℤ) (a : ℤ) (h : a ∈ lowerBounds s)
     : s.IsWf :=
   -- Anything works in place of `.natAbs` as long as it sends non-negative
@@ -199,34 +194,7 @@ lemma int_wf_of_lower_bound (s : Set ℤ) (a : ℤ) (h : a ∈ lowerBounds s)
       apply Int.add_lt_add_right (c := a)
   by unfold Set.IsWf Set.WellFoundedOn; rewrite [this]; apply IsWellFounded.wf
 
-example (a b c : ℤ) : a - b ≤ c -> a ≤ c + b  := fun a_1 => Int.le_add_of_sub_right_le a_1
-example (a b c : ℤ) : a + b ≤ c + b -> a ≤ c  := fun a_1 => le_of_add_le_add_right a_1
-
-/- def unbounded_beolow (f : AlmostHom ℤ) (hb : f ∉ boundedAlmostHoms ℤ) (hf : f.NonNeg) -/
-/-     : ∀ n, ∃ k, f k ≤ n := by -/
-/-   have pos := bdd_and_nonneg_of_pos hf hb -/
-/-   let ⟨b', hb'⟩ := almost_neg f -/
-/-   simp only [boundedAlmostHoms, AddSubgroup.mem_mk, Set.mem_setOf_eq, not_exists, _root_.Bounded, Bounded] at hb -/
-/-   push_neg at hb -/
-/-   let ⟨k, hf⟩ := hf -/
-/-   intro n -/
-/-   specialize hb $ |n| + b' -/
-/-   let ⟨g, hb⟩ := hb -/
-/-   have :=  Int.le_add_of_sub_right_le $ Int.sub_le_natAbs_sub (f (-g)) (-f g) -/
-/-   simp only [sub_neg_eq_add, Int.natAbs_neg] at this -/
-/-   simp at hb' -/
-/-   use -g -/
-/-   calc -/
-/-     f (-g) ≤ |f (-g)| := Int.le_natAbs -/
-/-          _ ≤ |f (-g) + f g| + |f g| := this -/
-/-          _ ≤ b' + |f g| := by rw [add_le_add_iff_right]; norm_cast; exact hb' g -/
-/-          _ ≤ n := sorry -/
-      /- _ ≤ sorry := sorry -/
-  /- exact ⟨-g, calc -/
-  /-   f g ≤ |f g| := Int.le_natAbs -/
-  /-     _ ≤ -/
-    /- _ ≤ sorry := sorry⟩ -/
-
+/-- Defines an inverse for an AlmostHom. -/
 noncomputable def invFun (f : AlmostHom ℤ) (hb : ¬Bounded f) (hf : f.NonNeg)
     : ℤ → ℤ := by
   have := mt (AlmostHom.bounded_of_nonneg_of_nonpos hf) hb
@@ -252,9 +220,10 @@ noncomputable def invFun (f : AlmostHom ℤ) (hb : ¬Bounded f) (hf : f.NonNeg)
     assumption
   exact Set.IsWf.min hwf hnbd
 
-example (a b : ℤ) : a ≤ b -> a - 1 < b := fun a_1 => Int.sub_one_lt_of_le a_1
+/- The above defined inverse gives an AlmostHom. -/
 lemma infFunAlmosthom (f : AlmostHom ℤ) (hb : f ∉ boundedAlmostHoms ℤ) (hf : f.NonNeg) :
-    ∃ k : ℕ, ∀ n₁ n₂, |(invFun f hb hf) (n₁ + n₂)  - (invFun f hb hf) n₁ - (invFun f hb hf) n₂| ≤ k := sorry
+    ∃ k : ℕ, ∀ n₁ n₂, |(invFun f hb hf) (n₁ + n₂)  - (invFun f hb hf) n₁ - (invFun f hb hf) n₂| ≤ k := by
+  sorry
 
 def neg_id  : AlmostHom ℤ :=
   ⟨fun n => -n, 0, by
@@ -262,6 +231,7 @@ def neg_id  : AlmostHom ℤ :=
     simp only [neg_add_rev, sub_neg_eq_add,
     neg_add_cancel_right, sub_self, Int.natAbs_zero, le_refl]⟩
 
+/- An inverse defined for an AlmostHom. -/
 noncomputable def inv (f : AlmostHom ℤ) (hf : f ∉ boundedAlmostHoms ℤ) : AlmostHom ℤ := by
   have pos_inv (g : AlmostHom ℤ) (hgb : g ∉ boundedAlmostHoms ℤ) (hg : g.NonNeg) : AlmostHom ℤ := by
     exact
@@ -269,7 +239,7 @@ noncomputable def inv (f : AlmostHom ℤ) (hf : f ∉ boundedAlmostHoms ℤ) : A
   by_cases f.NonNeg
   case pos => exact pos_inv f hf h
   case neg =>
-    exact -(pos_inv (-f) (by rwa [neg_mem_iff ..]) (Or.resolve_left f.nonneg_total h))
+    exact -(pos_inv (-f) (by rwa [neg_mem_iff ..]) (Or.resolve_left f.nonneg_total_integers h))
 
 
 end AlmostHom
@@ -354,7 +324,7 @@ lemma one_ne_zero : (1:QuasiHom ℤ) ≠ 0 := by
   apply Nat.not_succ_le_self; assumption
 
 private def one_mul (a : QuasiHom ℤ) : smulHom one a = a := by
-  apply QuotientAddGroup.induction_on a; intro _; rfl
+  apply QuotientAddGroup.induction_on a; intro z; rfl
 
 private def mul_one (a : QuasiHom ℤ) : smulHom a one = a := by
   apply QuotientAddGroup.induction_on a; intro _; rfl
