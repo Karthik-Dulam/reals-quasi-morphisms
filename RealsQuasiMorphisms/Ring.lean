@@ -303,13 +303,18 @@ protected theorem mul_comm : ∀ (a b : EudoxusReal), smulHom a b = smulHom b a 
 instance : CommRing EudoxusReal where
   mul := smul
   left_distrib f := smulHom f |>.map_add
-  right_distrib f₁ f₂ := sorry -- AddMonoidHom.add_apply (smulHom f₁) (smulHom f₂)
+  right_distrib f₁ f₂ g :=
+    congrArg (·.toFun g) <| (smulHom (G := ℤ)).map_add f₁ f₂
   mul_zero f := smulHom f |>.map_zero
-  zero_mul := (smulHom.map_zero ▸ AddMonoidHom.zero_apply ·)
-  one_mul := Quotient.ind fun _ => AlmostHom.ext rfl
-  mul_one := Quotient.ind fun _ => AlmostHom.ext rfl
-  mul_assoc := (Quotient.inductionOn₃ · · · fun _ _ _ => AlmostHom.ext rfl)
-  -- add_left_neg := AddCommGroup.add_left_neg
+  zero_mul f :=
+    congrArg (·.toFun f) <| (smulHom (G := ℤ)).map_zero
+  one_mul := Quotient.ind (congrArg (Quotient.mk _) <|
+    AlmostHom.ext <| Function.left_id ·)
+  mul_one := Quotient.ind (congrArg (Quotient.mk _) <|
+    AlmostHom.ext <| Function.right_id ·)
+  mul_assoc := (Quotient.inductionOn₃ · · · (congrArg (Quotient.mk _) <|
+    AlmostHom.ext <| Function.comp.assoc · · ·))
+  add_left_neg := AddGroup.add_left_neg
   mul_comm := EudoxusReal.mul_comm
 
 end EudoxusReal
