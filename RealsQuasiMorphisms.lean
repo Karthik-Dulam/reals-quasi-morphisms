@@ -1,2 +1,1 @@
-import RealsQuasiMorphisms.Field
-import RealsQuasiMorphisms.Order
+import RealsQuasiMorphisms.CompleteOrderedField
