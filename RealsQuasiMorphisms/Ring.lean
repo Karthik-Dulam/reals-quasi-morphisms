@@ -186,19 +186,20 @@ instance : One EudoxusReal where
   one := ⟦AlmostHom.id⟧
 
 /-- The multiplicative and additive identities of `EudoxusReal` are distinct. -/
-lemma one_ne_zero : (1:EudoxusReal) ≠ 0 := by
-  -- rewrite fails badly
-  apply not_iff_not.mpr (QuotientAddGroup.eq ..) |>.mpr
-  intro ⟨bound, h⟩              -- suppose ∀ n, |-id n + 0| ≤ bound
-  -- Simplify type of `h`
-  have h : ∀ n : ℤ, |(-n + 0)| ≤ bound := h
-  have h : ∀ n : ℤ, |n| ≤ bound := fun n =>
-    Int.neg_neg n ▸ Int.add_zero (- -n) ▸ h (-n)
-  have : bound + 1 ≤ bound := by
-    rewrite [←Int.natAbs_cast (bound + 1),
-             show ↑(bound + 1) = ↑bound + 1 from rfl]
-    exact h (bound + 1)
-  apply Nat.not_succ_le_self; assumption
+instance one_ne_zero : Nontrivial EudoxusReal where
+  exists_pair_ne := ⟨1, 0, by
+    -- rewrite fails badly
+    apply not_iff_not.mpr (QuotientAddGroup.eq ..) |>.mpr
+    intro ⟨bound, h⟩              -- suppose ∀ n, |-id n + 0| ≤ bound
+    -- Simplify type of `h`
+    have h : ∀ n : ℤ, |(-n + 0)| ≤ bound := h
+    have h : ∀ n : ℤ, |n| ≤ bound := fun n =>
+      Int.neg_neg n ▸ Int.add_zero (- -n) ▸ h (-n)
+    have : bound + 1 ≤ bound := by
+      rewrite [←Int.natAbs_cast (bound + 1),
+               show ↑(bound + 1) = ↑bound + 1 from rfl]
+      exact h (bound + 1)
+    apply Nat.not_succ_le_self; assumption⟩
 
 end EudoxusReal
 
