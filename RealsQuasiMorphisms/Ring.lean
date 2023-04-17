@@ -178,26 +178,6 @@ end QuasiHom
 
 namespace EudoxusReal export QuasiHom (smulHom smul) end EudoxusReal
 
-/- The following 'helper lemmas' are for showing field structure.
-
-private lemma right_distrib (a b c : QuasiHom ℤ) :
-    smulHom (a + b) c = smulHom a c + smulHom b c := by
-  rw [AddMonoidHom.map_add]; apply AddMonoidHom.add_apply
-
-private lemma zero_mul (a : QuasiHom ℤ) : smulHom 0 a = 0 := by
-  simp only [map_zero, AddMonoidHom.zero_apply]
-
-private lemma mul_zero (a : QuasiHom ℤ) : @smulHom ℤ _ a 0 = 0 := by
-  simp only [map_zero]
-
-private lemma mul_assoc (a b c : QuasiHom ℤ) :
-    smulHom (smulHom a b) c = smulHom a (smulHom b c) := by
-  apply QuotientAddGroup.induction_on a
-  apply QuotientAddGroup.induction_on b
-  apply QuotientAddGroup.induction_on c
-  intro _ _ _; rfl
--/
-
 namespace EudoxusReal
 
 /-- The identity for the multiplication of `QuasiHom`s. -/
