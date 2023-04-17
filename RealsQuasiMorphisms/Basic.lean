@@ -1,12 +1,10 @@
-import Mathlib.Algebra.Group.Basic
-import Mathlib.GroupTheory.Subgroup.Basic
 import Mathlib.GroupTheory.QuotientGroup
-
-import Mathlib.Tactic.Linarith
 
 import Util.Arithmetic
 import Util.FunctionBounds
 import Util.Meta.Tactics
+
+import Mathlib.Tactic.Linarith
 
 /-! Defines quasi-morphisms from an abelian group to ℤ and algebraic operations on them.
 
