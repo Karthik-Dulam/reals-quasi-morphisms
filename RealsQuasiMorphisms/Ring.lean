@@ -318,7 +318,9 @@ instance : CommRing EudoxusReal where
     AlmostHom.ext <| Function.right_id ·)
   mul_assoc := (Quotient.inductionOn₃ · · · (congrArg (Quotient.mk _) <|
     AlmostHom.ext <| Function.comp.assoc · · ·))
-  add_left_neg := AddGroup.add_left_neg
   mul_comm := EudoxusReal.mul_comm
+
+  sub_eq_add_neg := SubNegMonoid.sub_eq_add_neg
+  add_left_neg := AddGroup.add_left_neg
 
 end EudoxusReal
