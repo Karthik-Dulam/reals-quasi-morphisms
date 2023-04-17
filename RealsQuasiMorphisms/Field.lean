@@ -19,83 +19,44 @@ lemma int_wf_of_lower_bound (s : Set ℤ) (a : ℤ) (h : a ∈ lowerBounds s)
       apply Int.add_lt_add_right (c := a)
   by unfold Set.IsWf Set.WellFoundedOn; rewrite [this]; apply IsWellFounded.wf
 
-example (a b c : ℤ) : a - b ≤ c -> a ≤ c + b  := fun a_1 => Int.le_add_of_sub_right_le a_1
-example (a b c : ℤ) : a + b ≤ c + b -> a ≤ c  := fun a_1 => le_of_add_le_add_right a_1
+namespace AlmostHom
 
-def unbounded_below (f : AlmostHom ℤ) (hb : f ∉ boundedAlmostHoms ℤ) (hf : f.NonNeg)
-    : ∀ n, ∃ k, f k ≤ n := by
-  have pos := bdd_and_nonneg_of_pos hf hb
-  let ⟨b', hb'⟩ := almost_neg f
-  simp only [boundedAlmostHoms, AddSubgroup.mem_mk, Set.mem_setOf_eq, not_exists, _root_.Bounded, Bounded] at hb
-  push_neg at hb
-  let ⟨k, hf⟩ := hf
-  intro n
-  specialize hb $ |n| + b'
-  let ⟨g, hb⟩ := hb
-  have :=  Int.le_add_of_sub_right_le $ Int.sub_le_natAbs_sub (f (-g)) (-f g)
-  simp only [sub_neg_eq_add, Int.natAbs_neg] at this
-  simp at hb'
-  use -g
-  calc
-    f (-g) ≤ |f (-g)| := Int.le_natAbs
-         _ ≤ |f (-g) + f g| + |f g| := this
-         _ ≤ b' + |f g| := by rw [add_le_add_iff_right]; norm_cast; exact hb' g
-         _ ≤ n := sorry
-      /- _ ≤ sorry := sorry -/
-  /- exact ⟨-g, calc -/
-  /-   f g ≤ |f g| := Int.le_natAbs -/
-  /-     _ ≤ -/
-    /- _ ≤ sorry := sorry⟩ -/
-
-
-noncomputable def invFun (f : AlmostHom ℤ) (hb : b ∉ boundedAlmostHoms ℤ) (hf : f.NonNeg)
+private noncomputable def invFun_pos {f : AlmostHom ℤ}
+    (hb : ¬f.Bounded) (hf : f.NonNeg)
     : ℤ → ℤ := by
+  have h : ¬(⇑f).BddAboveOn (Set.Ici 0) := by
+    rewrite [←AlmostHom.nonpos_iff_bddAbove_on_nonneg]
+    exact mt (AlmostHom.bounded_of_nonneg_of_nonpos hf) hb
+  have hdiv := diverges_nonpos_of_nonneg_of_not_bddAbove_on_nonneg h
+  have hdiv' := diverges_nonneg_of_nonneg_of_not_bddAbove_on_nonneg h
   intro n
   let hl := { m : ℤ | f m ≥ n }
-  have hwf : Set.IsWf $ hl := by
-    let ⟨k, hf⟩ := hf
-    simp only [boundedAlmostHoms, AddSubgroup.mem_mk, Set.mem_setOf_eq,
-               not_exists, Bounded] at hb
-    push_neg at hb
-    apply int_wf_of_lower_bound _ $ k
-    rw [lowerBounds]
+  have hwf : hl.IsWf := by
+    let ⟨N, hN⟩ := hdiv (n-1)
+    apply int_wf_of_lower_bound _ (-N)
     intro a ha
-    simp at ha
-    sorry
-
-    /- rw [Set.IsWf] -/
-    /- apply bdd_below.well_founded_on_lt -/
-  have hnbd : hl.Nonempty := sorry
+    simp only [ge_iff_le, Set.mem_setOf_eq] at ha
+    specialize hN a
+    have contra := mt hN
+    push_neg at contra
+    exact le_of_lt (contra $ Int.sub_one_lt_of_le ha)
+  have hnbd : hl.Nonempty := by
+    let ⟨N, hN⟩ := hdiv' n
+    specialize hN N (by exact le_refl ..)
+    use N
+    assumption
   exact Set.IsWf.min hwf hnbd
 
-lemma infFunAlmosthom (f : AlmostHom ℤ) (hb : f ∉ boundedAlmostHoms ℤ) (hf : f.NonNeg) :
-    ∃ k : ℕ, ∀ n₁ n₂, |(invFun f hb hf) (n₁ + n₂)  - (invFun f hb hf) n₁ - (invFun f hb hf) n₂| ≤ k := sorry
+private noncomputable def invAlmostHom_pos {f : AlmostHom ℤ} (hb : ¬f.Bounded) (hf : f.NonNeg)
+    : AlmostHom ℤ where
+  toFun := f.invFun_pos hb hf
+  almostAdditive := sorry
 
-def neg_id  : AlmostHom ℤ :=
-  ⟨fun n => -n, 0, by
-    intro n₁ n₂
-    simp only [neg_add_rev, sub_neg_eq_add,
-    neg_add_cancel_right, sub_self, Int.natAbs_zero, le_refl]⟩
+noncomputable def inv (f : AlmostHom ℤ) (hf : ¬f.Bounded) : AlmostHom ℤ :=
+  dite (h := Classical.dec f.NonNeg)
+    (f.invAlmostHom_pos hf ·)
+    (Neg.neg <|
+      (-f).invAlmostHom_pos (mt (boundedAlmostHoms ℤ).neg_mem' (by rwa [neg_neg f])) <|
+      Or.resolve_left f.nonneg_total_integers ·)
 
-noncomputable def inv (f : AlmostHom ℤ) (hf : f ∉ boundedAlmostHoms ℤ) : AlmostHom ℤ := by
-  have pos_inv (g : AlmostHom ℤ) (hgb : g ∉ boundedAlmostHoms ℤ) (hg : g.NonNeg) : AlmostHom ℤ := by
-    exact
-      ⟨invFun g hgb hg, infFunAlmosthom g hgb hg⟩
-  by_cases f.NonNeg
-  case pos => exact pos_inv f hf h
-  case neg =>
-    exact -(pos_inv (-f) (by rwa [neg_mem_iff ..]) (Or.resolve_left f.nonneg_total h))
-
-private def inv (a : QuasiHom ℤ) : QuasiHom ℤ := by
-  /- have : @DecidablePred (AlmostHom ℤ) (AlmostHom.Bounded)  := Classical.decPred _ -/
-  /- have : ∀ f : AlmostHom ℤ, @Decidable (f ∈ boundedAlmostHoms ℤ) := by sorry -/
-  open QuotientAddGroup in
-  refine
-    lift (boundedAlmostHoms ℤ)
-    fun f => by
-      by_cases c: f ∈ boundedAlmostHoms ℤ
-      · exact (0 : AlmostHom ℤ)
-      · exact AlmostHom.inv f c
-      -- if c: (f ∈ boundedAlmostHoms ℤ) then 0 else AlmostHom.inv f c
-  sorry
-
+end AlmostHom

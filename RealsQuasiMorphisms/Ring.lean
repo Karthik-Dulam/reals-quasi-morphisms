@@ -3,7 +3,6 @@ import RealsQuasiMorphisms.Basic
 import Util.Arithmetic
 
 import Mathlib.Tactic.Abel
-import Aesop
 
 open scoped Int.natAbs
 
@@ -135,7 +134,6 @@ end AlmostHom
 namespace QuasiHom
 
 /-- Multiplication of a `EudoxusReal` and a `QuasiHom G` as an bi-additive map. -/
-@[aesop norm unfold]
 def smulHom : EudoxusReal →+ QuasiHom G →+ QuasiHom G := by
   /- Skeleton. This is glue code tying `Quotient`- and
   `QuotientAddGroup`- and `MonoidHom`-related functions to define the
