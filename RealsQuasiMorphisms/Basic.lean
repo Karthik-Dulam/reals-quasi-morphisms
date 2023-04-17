@@ -21,6 +21,9 @@ variable {G : Type _}
 section TypeDef
 variable [Add G]
 
+/- Generalise this to functions from an Add to an NormedAdd?
+Of course, a norm requires the reals, so perhaps a uniform space
+structure on the codomain. -/
 /-- A function from an AddCommGroup to ℤ is 'almost additive' if it
 respects addition as a group homomorphism would within an error which
 is bounded independently of the arguments. -/
