@@ -113,24 +113,24 @@ lemma bounded_comp (f₂ : AlmostHom G)
   let ⟨bound, h⟩ := h; ⟨bound, fun g => h (f₂ g)⟩
 
 /-- Composition of AlmostHoms f g is almost equal to (f n * g n)/n -/
-private lemma comp_almost_mul (f₁ f₂ : AlmostHom ℤ) 
+private lemma comp_almost_mul (f₁ f₂ : AlmostHom ℤ)
     : ∃ k, ∀ n, |n * (f₁.comp f₂ n) - f₂ n * f₁ n| ≤ (|n| + 1) * k := by
   let ⟨a', b', hlin⟩ := linear_growth_upper_bound_int f₂
-  let ⟨b₁, hf₁⟩ := f₁.almostAdditive 
+  let ⟨b₁, hf₁⟩ := f₁.almostAdditive
   exact ⟨_, by
     intro n
     have hypcomm := AlmostAdditive.almost_smul_interchange (hf₁) (f₂ n) n 1
     specialize hlin n
     simp only [smul_eq_mul, mul_one] at hypcomm
-    calc |n * (f₁.comp f₂ n) - f₂ n * f₁ n| 
+    calc |n * (f₁.comp f₂ n) - f₂ n * f₁ n|
         ≤ b₁*(|f₂ n| + |n| + 2) := hypcomm
-      _ ≤ b₁*(a'*|n| + b' + |n| + 2) := 
-          by apply mul_le_mul_of_nonneg_left 
+      _ ≤ b₁*(a'*|n| + b' + |n| + 2) :=
+          by apply mul_le_mul_of_nonneg_left
               (by simp only [add_le_add_iff_right, hlin]) (zero_le _)
       _ = b₁*(|n| * (a' + 1) + (b'+ 2)) := by ring
-      _ ≤ b₁*(|n| * (a' + 1) + (b'+ 2)) + b₁*(a'+1) := 
+      _ ≤ b₁*(|n| * (a' + 1) + (b'+ 2)) + b₁*(a'+1) :=
           by simp only [le_add_iff_nonneg_right, zero_le]
-      _ ≤ b₁*(|n| * (a' + 1) + (b'+ 2)) + b₁*(a'+1) + b₁*(|n|)*(b'+2) := 
+      _ ≤ b₁*(|n| * (a' + 1) + (b'+ 2)) + b₁*(a'+1) + b₁*(|n|)*(b'+2) :=
           by simp only [le_add_iff_nonneg_right, zero_le]
       _ = (|n|+1)*(b₁*(a'+1 + b'+2)) := by ring
   ⟩
@@ -138,40 +138,40 @@ private lemma comp_almost_mul (f₁ f₂ : AlmostHom ℤ)
 lemma succ_le_two_mul (a : ℕ) (ha : a ≠ 0) : a+1 ≤ 2*a := by cases a; contradiction; apply Nat.succ_le.2; linarith [NeZero.pos]
 
 /-- Composition of AlmostHoms is commutative. -/
-lemma comp_almost_comm (f₁ f₂ : AlmostHom ℤ) 
+lemma comp_almost_comm (f₁ f₂ : AlmostHom ℤ)
     : (f₁.comp f₂) - (f₂.comp f₁) ∈ boundedAlmostHoms ℤ := by
   simp only [boundedAlmostHoms, Bounded, AddSubgroup.mem_mk, Set.mem_setOf_eq]
   let ⟨k₁, hf₁⟩ := comp_almost_mul f₁ f₂
   let ⟨k₂, hf₂⟩ := comp_almost_mul f₂ f₁
-  exact ⟨_, by 
+  exact ⟨_, by
     intro n
     have triag := Int.natAbs_add_le (n * (f₁.comp f₂ n) - f₂ n * f₁ n) (f₂ n * f₁ n - n * (f₂.comp f₁ n))
     simp only [sub_add_sub_cancel, Int.diff_eq] at triag
-    if c: n = 0 
-    then 
+    if c: n = 0
+    then
       simp only [c, zero_mul, zero_sub, Int.natAbs_neg, ge_iff_le] at hf₁ hf₂ |-
       exact self_le_add_right |(f₁.comp f₂ - f₂.comp f₁) 0| (2*(k₁ + k₂))
-    else 
-    have goal_mul_n := 
-      calc 
+    else
+    have goal_mul_n :=
+      calc
         |n| * |f₁.comp f₂ n - f₂.comp f₁ n|
           = |n*f₁.comp f₂ n - n*f₂.comp f₁ n| := by rw [←Int.natAbs_mul, mul_sub_left_distrib]
         _ ≤ |n*f₁.comp f₂ n - f₂ n * f₁ n| + |f₂ n * f₁ n - n*f₂.comp f₁ n| := triag
-        _ ≤ |n*f₁.comp f₂ n - f₂ n * f₁ n| + (|n|+1)*k₂  := 
-            by 
+        _ ≤ |n*f₁.comp f₂ n - f₂ n * f₁ n| + (|n|+1)*k₂  :=
+            by
               rw [mul_comm $ f₂ n, ←Int.natAbs_neg (f₁ n * f₂ n - n*f₂.comp f₁ n)]
-              apply Nat.add_le_add_left; 
+              apply Nat.add_le_add_left;
               simp only [neg_sub, Int.diff_eq]; exact hf₂ ..
         _ ≤ (|n|+1)*k₁ + (|n|+1)*k₂ := Nat.add_le_add_right (hf₁ ..) ..
         _ = (|n|+1)*(k₁ + k₂) := by ring
-        _ ≤ |n| * (2*(k₁ + k₂)) := 
-            by 
+        _ ≤ |n| * (2*(k₁ + k₂)) :=
+            by
               rw [←mul_assoc, mul_comm |n|]
-              exact Nat.mul_le_mul_of_nonneg_right 
-                <| succ_le_two_mul |n| 
+              exact Nat.mul_le_mul_of_nonneg_right
+                <| succ_le_two_mul |n|
                 <| Int.natAbs_ne_zero.2 c
-    calc |f₁.comp f₂ n - f₂.comp f₁ n| 
-      ≤ 2*(k₁ + k₂) := le_of_mul_le_mul_left goal_mul_n 
+    calc |f₁.comp f₂ n - f₂.comp f₁ n|
+      ≤ 2*(k₁ + k₂) := le_of_mul_le_mul_left goal_mul_n
         <| Or.resolve_left (Nat.eq_zero_or_pos ..) (Int.natAbs_ne_zero.2 c)
     _ ≤ _ := self_le_add_left  (2*(k₁ + k₂)) |(f₁.comp f₂ - f₂.comp f₁) 0| ⟩
 
@@ -202,8 +202,8 @@ lemma int_wf_of_lower_bound (s : Set ℤ) (a : ℤ) (h : a ∈ lowerBounds s)
 example (a b c : ℤ) : a - b ≤ c -> a ≤ c + b  := fun a_1 => Int.le_add_of_sub_right_le a_1
 example (a b c : ℤ) : a + b ≤ c + b -> a ≤ c  := fun a_1 => le_of_add_le_add_right a_1
 
-def unbounded_beolow (f : AlmostHom ℤ) (hb : f ∉ boundedAlmostHoms ℤ) (hf : f.NonNeg) 
-    : ∀ n, ∃ k, f k ≤ n := by 
+def unbounded_beolow (f : AlmostHom ℤ) (hb : f ∉ boundedAlmostHoms ℤ) (hf : f.NonNeg)
+    : ∀ n, ∃ k, f k ≤ n := by
   have pos := bdd_and_nonneg_of_pos hf hb
   let ⟨b', hb'⟩ := almost_neg f
   simp only [boundedAlmostHoms, AddSubgroup.mem_mk, Set.mem_setOf_eq, not_exists, _root_.Bounded, Bounded] at hb
@@ -216,23 +216,22 @@ def unbounded_beolow (f : AlmostHom ℤ) (hb : f ∉ boundedAlmostHoms ℤ) (hf 
   simp only [sub_neg_eq_add, Int.natAbs_neg] at this
   simp at hb'
   use -g
-  calc 
+  calc
     f (-g) ≤ |f (-g)| := Int.le_natAbs
          _ ≤ |f (-g) + f g| + |f g| := this
          _ ≤ b' + |f g| := by rw [add_le_add_iff_right]; norm_cast; exact hb' g
          _ ≤ n := sorry
       /- _ ≤ sorry := sorry -/
-  /- exact ⟨-g, calc -/ 
+  /- exact ⟨-g, calc -/
   /-   f g ≤ |f g| := Int.le_natAbs -/
-  /-     _ ≤ -/ 
-    /- _ ≤ sorry := sorry⟩ -/ 
-    
+  /-     _ ≤ -/
+    /- _ ≤ sorry := sorry⟩ -/
 
-noncomputable def invFun (f : AlmostHom ℤ) (hb : b ∉ boundedAlmostHoms ℤ) (hf : f.NonNeg) 
-    : ℤ → ℤ := by 
+noncomputable def invFun (f : AlmostHom ℤ) (hb : b ∉ boundedAlmostHoms ℤ) (hf : f.NonNeg)
+    : ℤ → ℤ := by
   intro n
   let hl := { m : ℤ | f m ≥ n }
-  have hwf : Set.IsWf $ hl := by 
+  have hwf : Set.IsWf $ hl := by
     let ⟨k, hf⟩ := hf
     simp only [boundedAlmostHoms, AddSubgroup.mem_mk, Set.mem_setOf_eq,
                not_exists, Bounded] at hb
@@ -243,22 +242,22 @@ noncomputable def invFun (f : AlmostHom ℤ) (hb : b ∉ boundedAlmostHoms ℤ) 
     simp at ha
     sorry
 
-    /- rw [Set.IsWf] -/ 
+    /- rw [Set.IsWf] -/
     /- apply bdd_below.well_founded_on_lt -/
   have hnbd : hl.Nonempty := sorry
   exact Set.IsWf.min hwf hnbd
 
-lemma infFunAlmosthom (f : AlmostHom ℤ) (hb : f ∉ boundedAlmostHoms ℤ) (hf : f.NonNeg) : 
+lemma infFunAlmosthom (f : AlmostHom ℤ) (hb : f ∉ boundedAlmostHoms ℤ) (hf : f.NonNeg) :
     ∃ k : ℕ, ∀ n₁ n₂, |(invFun f hb hf) (n₁ + n₂)  - (invFun f hb hf) n₁ - (invFun f hb hf) n₂| ≤ k := sorry
 
 def neg_id  : AlmostHom ℤ :=
-  ⟨fun n => -n, 0, by 
+  ⟨fun n => -n, 0, by
     intro n₁ n₂
-    simp only [neg_add_rev, sub_neg_eq_add, 
+    simp only [neg_add_rev, sub_neg_eq_add,
     neg_add_cancel_right, sub_self, Int.natAbs_zero, le_refl]⟩
 
 noncomputable def inv (f : AlmostHom ℤ) (hf : f ∉ boundedAlmostHoms ℤ) : AlmostHom ℤ := by
-  have pos_inv (g : AlmostHom ℤ) (hgb : g ∉ boundedAlmostHoms ℤ) (hg : g.NonNeg) : AlmostHom ℤ := by 
+  have pos_inv (g : AlmostHom ℤ) (hgb : g ∉ boundedAlmostHoms ℤ) (hg : g.NonNeg) : AlmostHom ℤ := by
     exact
       ⟨invFun g hgb hg, infFunAlmosthom g hgb hg⟩
   by_cases f.NonNeg
@@ -360,7 +359,7 @@ private def inv (a : QuasiHom ℤ) : QuasiHom ℤ := by
   open QuotientAddGroup in
   refine
     lift (boundedAlmostHoms ℤ)
-    fun f => by 
+    fun f => by
       by_cases c: f ∈ boundedAlmostHoms ℤ
       · exact (0 : AlmostHom ℤ)
       · exact AlmostHom.inv f c
