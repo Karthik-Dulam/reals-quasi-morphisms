@@ -78,7 +78,7 @@ rely on general abstract algebra to go from there to a field. -/
 
 namespace EudoxusReal
 
-noncomputable instance instField : Field EudoxusReal :=
+noncomputable instance : Field EudoxusReal :=
   IsField.toField {
     exists_pair_ne := Nontrivial.exists_pair_ne
     mul_comm := CommRing.mul_comm
@@ -87,11 +87,5 @@ noncomputable instance instField : Field EudoxusReal :=
                              mt (QuotientAddGroup.eq_zero_iff f).mpr h
       ⟨f.inv h, (QuotientAddGroup.eq ..).mpr (f.mul_inv h)⟩
   }
-
-noncomputable instance : LinearOrderedField EudoxusReal :=
-  { instField, inferInstanceAs (LinearOrderedAddCommGroup EudoxusReal) with
-    zero_le_one :=
-      ⟨0, fun {n} (h : n ≥ 0) => show n - 0 ≥ 0 from Int.sub_zero n |>.symm ▸ h⟩
-    mul_pos := fun a b h_a h_b => sorry }
 
 end EudoxusReal
