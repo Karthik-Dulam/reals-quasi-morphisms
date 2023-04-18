@@ -1,3 +1,2 @@
-import RealsQuasiMorphisms.Basic
-import RealsQuasiMorphisms.Algebra
+import RealsQuasiMorphisms.Field
 import RealsQuasiMorphisms.Order

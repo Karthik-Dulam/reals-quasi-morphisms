@@ -148,6 +148,7 @@ variable [LinearOrderedAddCommGroup G] {f f₁ f₂ : AlmostHom G}
 
 namespace AlmostHom
 
+/-- For an AlmostHom `f` if both `f` and `-f` are non-negative, then `f` is bounded. -/
 lemma bounded_of_nonneg_of_nonpos (h₁ : f.NonNeg) (h₂ : (-f).NonNeg)
     : f.Bounded :=
   let ⟨bound₁, h₁'⟩ := bddAbove_on_nonneg_of_nonpos h₂
@@ -178,7 +179,7 @@ end AlmostHom
 
 namespace QuasiHom
 
-/-- If `f` and `-f` are both non-negative quasi-morphisms, then `f` must be `0`. -/
+/-- For a QuasiHom `f` if `f` and `-f` are both non-negative quasi-morphisms, then `f` must be `0`. -/
 protected lemma nonneg_antisymm {f : QuasiHom G}
     : f.NonNeg → (-f).NonNeg → f = 0 :=
   Quotient.inductionOn f (motive := fun f : QuasiHom G => f.NonNeg → (-f).NonNeg → f = 0)
